@@ -11,7 +11,6 @@ import {
 import { getRandomEmoji, DiscordRequest } from './utils.js';
 import { getShuffledOptions, getResult } from './game.js';
 import './database/connect.js'
-
 // Create an express app
 const app = express();
 // Get port, or default to 3000
@@ -41,7 +40,15 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
    */
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
-
+    if (name === 'love'){
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          // Fetches a random emoji to send from a helper function
+          content: `Love <@userId> from Hong Kong~ ❤`,
+        },
+      });
+    }
     // "test" command
     if (name === 'test') {
       // Send a message into the channel where command was triggered from
@@ -68,7 +75,6 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
         id: userId,
         objectName,
       };
-
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -147,6 +153,7 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
         // Get user ID and object choice for responding user
         // User ID is in user field for (G)DMs, and member for servers
         const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+        console.log(`<@${userId}>`);
         const objectName = data.values[0];
         // Calculate result from helper function
         const resultStr = getResult(activeGames[gameId], {
