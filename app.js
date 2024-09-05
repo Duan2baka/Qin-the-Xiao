@@ -89,10 +89,10 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             return;
         }
 
-        if (name === 'show'){
+        if (name === 'showlists'){
             SQLpool.query(`SELECT list_name AS name FROM table_list WHERE guild_id='${guild_id}';`, function (error, results, fields) {
                 var msg = 'Here are all the lists created:';
-                console.log(results);
+                // console.log(results);
                 for(const obj in results) msg = msg + (obj ? '\n' : '') + `- ${results[obj].name}`; 
                 res.send({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

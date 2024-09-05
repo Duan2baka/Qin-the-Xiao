@@ -33,8 +33,24 @@ const LOVE_COMMAND = {
   contexts: [0, 1, 2],
 };
 
-const SHOWLIST_COMMAND = {
+const SHOWLISTITEM_COMMAND = {
   name: 'show',
+  description: 'Show all entries in a list',
+  options: [
+    {
+      type: 3,
+      name: 'name',
+      description: 'Select a list',
+      required: true
+    },
+  ],
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
+const SHOWLIST_COMMAND = {
+  name: 'showlists',
   description: 'Show all lists created',
   type: 1,
   integration_types: [0, 1],
@@ -43,7 +59,7 @@ const SHOWLIST_COMMAND = {
 
 const CREATELIST_COMMAND = {
   name: 'create',
-  description: 'Show all lists created',
+  description: 'Create a list',
   options: [
     {
       type: 3,
@@ -87,6 +103,44 @@ const REMOVELIST_COMMAND = {
   contexts: [0, 1, 2],
 };
 
+const REMOVEFROMLIST_COMMAND = {
+  name: 'remove_from_list',
+  description: 'Remove an entry from a list',
+  options: [
+    {
+      type: 3,
+      name: 'entry',
+      description: 'Entry name',
+      required: true
+    },
+    {
+      type: 3,
+      name: 'list',
+      description: 'List name',
+      required: true
+    },
+  ],
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
+const DRAWFROMLIST_COMMAND = {
+  name: 'draw',
+  description: 'Randomly draw one entry from a list',
+  options: [
+    {
+      type: 3,
+      name: 'list',
+      description: 'Select your list',
+      required: true
+    },
+  ],
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
 // Command containing options
 const CHALLENGE_COMMAND = {
   name: 'challenge',
@@ -105,6 +159,7 @@ const CHALLENGE_COMMAND = {
   contexts: [0, 2],
 };
 
-const ALL_COMMANDS = [TEST_COMMAND, LOVE_COMMAND, CREATELIST_COMMAND, REMOVELIST_COMMAND, ADDTOLIST_COMMAND, SHOWLIST_COMMAND, CHALLENGE_COMMAND];
+const ALL_COMMANDS = [TEST_COMMAND, LOVE_COMMAND, CREATELIST_COMMAND, REMOVELIST_COMMAND, ADDTOLIST_COMMAND, DRAWFROMLIST_COMMAND
+  , SHOWLIST_COMMAND, REMOVEFROMLIST_COMMAND, CHALLENGE_COMMAND, SHOWLISTITEM_COMMAND];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
