@@ -25,6 +25,15 @@ const activeGames = {};
  * Parse request body and verifies incoming requests using discord-interactions package
  */
 app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
+
+    function sendMsg(res, msg){
+        res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+                content: msg,
+            },
+        });
+    }
     // Interaction type and data
     const { type, id, data, guild_id } = req.body;
     //console.log(req);
@@ -67,24 +76,29 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             var listname = data.options[0].value;
             SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
                 //console.log(results);
-                if( results.length ){
-                    res.send({
-                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: {
-                            content: `List \`${listname}\` exists!`,
-                        },
-                    });
-                }
+                if( results.length ) sendMsg(res, `List \`${listname}\` exists!`);
                 else{
                     SQLpool.query(`INSERT INTO table_list (guild_id, list_name) VALUES ('${guild_id}', '${listname}');`, function (error, results, fields) {
                         // console.log(results.insertId);
                         SQLpool.query(`CREATE TABLE table${results.insertId} (id int NOT NULL AUTO_INCREMENT, entry varchar(16) NOT NULL, PRIMARY KEY (id));`, function (error, results, fields) {
-                            res.send({
-                                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                                data: {
-                                    content: `List \`${listname}\` sucessfully created!`,
-                                },
-                            });
+                            sendMsg(res, `List \`${listname}\` sucessfully created!`);
+                        })
+                    })
+                }
+            })
+            return;
+        }
+
+        if (name === 'remove' && data.options[0].value) {
+            var listname = data.options[0].value;
+            SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                //console.log(results);
+                if( !results.length ) sendMsg(res, `List \`${listname}\` doesn't exist!`);
+                else{
+                    SQLpool.query(`REMOVE FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                        // console.log(results.insertId);
+                        SQLpool.query(`DROP TABLE table${results.insertId};`, function (error, results, fields) {
+                            sendMsg(res, `List \`${listname}\` sucessfully removed!`);
                         })
                     })
                 }
@@ -97,12 +111,7 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
                 var msg = 'Here are all the lists created:';
                 // console.log(results);
                 for(const idx in results) msg = msg + (idx ? '\n-' : '-') + results[obj].name;
-                res.send({
-                    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: {
-                        content: msg,
-                    },
-                });
+                sendMsg(res, msg);
             })
             return;
         }
@@ -112,38 +121,39 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
                 //console.log(results);
                 if( results.length ){
-                    SQLpool.query(`SELECT entry FROM table${results.id};`, function (error, results, fields) {
+                    SQLpool.query(`SELECT entry FROM table${results[0].id};`, function (error, results, fields) {
                         if(results){
                             var msg = `Here are all entries in list \`${listname}\``;
                             for(const idx in results) msg += (idx ? '\n- ' : '- ') + results.entry;
-                            res.send({
-                                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                                data: {
-                                    content: msg,
-                                },
-                            });
+                            sendMsg(res, msg);
                         }
-                        else{
-                            res.send({
-                                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                                data: {
-                                    content: `No entry in list ${listname}!`,
-                                },
-                            });
-                        }
+                        else sendMsg(res, `No entry in list ${listname}!`);
                     })
                 }
-                else{
-                    res.send({
-                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: {
-                            content: `List \`${listname}\` doesn't exist!`,
-                        },
-                    });
-                }
+                else sendMsg(res, `List \`${listname}\` doesn't exist!`);
             })
             return;
         }
+
+        if(name == 'add_to_list' && data.options[0].value && data.options[1].value){
+            var entry = data.options[0].value;
+            var listname = data.options[1].value;
+            SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                if( results.length ){
+                    SQLpool.query(`SELECT * FROM table${results[0].id} WHERE entry=(${entry});`, function (error, results, fields) {
+                        if(results.length) sendMsg(res, `Entry ${entry} exists in list \`${listname}\`!`)
+                        else{
+                            SQLpool.query(`INSERT INTO table${results[0].id} (entry) VALUES (${entry});`, function (error, results, fields) {
+                                sendMsg(res, `Successfully insert entry ${entry} into list \`${listname}\`!`)
+                            })
+                        }
+                    })
+                }
+                else sendMsg(res, `List \`${listname}\` doesn't exist!`);
+            })
+            return;
+        }
+
         // "challenge" command
         if (name === 'challenge' && id) {
             // Interaction context
