@@ -12,7 +12,7 @@ export var SQLpool = mysql.createPool({
 });
 
 /*
-var results = _this.pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
+pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
     if (error) throw error;
     console.log(results[0].solution)
 })

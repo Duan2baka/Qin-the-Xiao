@@ -26,8 +26,8 @@ const activeGames = {};
  */
 app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
     // Interaction type and data
-    const { type, id, data } = req.body;
-    
+    const { type, id, data, guild_id } = req.body;
+    //console.log(req);
     /**
      * Handle verification requests
      */
@@ -59,6 +59,34 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
                     content: `hello world ${getRandomEmoji()}`,
                 },
             });
+        }
+
+        if (name === 'create' && data.options[0].value) {
+            //console.log(data.options[0]);
+            //console.log(`SELECT id FROM table_list WHERE list_name='${data.options[0].value}' AND guild_id='${guild_id}';`);
+            var listname = data.options[0].value;
+            SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                //console.log(results);
+                if( results.length ){
+                    res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `List \`${listname}\` exists!`,
+                        },
+                    });
+                }
+                else{
+                    SQLpool.query(`INSERT INTO table_list (guild_id, list_name) VALUES ('${guild_id}', '${listname}');`, function (error, results, fields) {
+                        res.send({
+                            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                            data: {
+                                content: `List \`${listname}\` sucessfully created!`,
+                            },
+                        });
+                    })
+                }
+            })
+            return;
         }
 
         // "challenge" command
