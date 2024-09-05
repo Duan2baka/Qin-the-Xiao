@@ -95,9 +95,9 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
                 //console.log(results);
                 if( !results.length ) sendMsg(res, `List \`${listname}\` doesn't exist!`);
                 else{
-                    SQLpool.query(`REMOVE FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
-                        // console.log(results.insertId);
-                        SQLpool.query(`DROP TABLE table${results.insertId};`, function (error, results, fields) {
+                    var idx = results[0].id;
+                    SQLpool.query(`DELETE FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                        SQLpool.query(`DROP TABLE table${idx};`, function (error, results, fields) {
                             sendMsg(res, `List \`${listname}\` sucessfully removed!`);
                         })
                     })
@@ -110,21 +110,22 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             SQLpool.query(`SELECT list_name AS name FROM table_list WHERE guild_id='${guild_id}';`, function (error, results, fields) {
                 var msg = 'Here are all the lists created:';
                 // console.log(results);
-                for(const idx in results) msg = msg + (idx ? '\n-' : '-') + results[obj].name;
+                for(const idx in results) msg = msg + (idx ? '\n- ' : '- ') + results[idx].name;
                 sendMsg(res, msg);
             })
             return;
         }
 
-        if (name === 'show'){
+        if (name === 'show' && data.options[0]){
             var listname = data.options[0].value;
             SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
                 //console.log(results);
                 if( results.length ){
                     SQLpool.query(`SELECT entry FROM table${results[0].id};`, function (error, results, fields) {
-                        if(results){
+                        // console.log(results.length);
+                        if(results.length){
                             var msg = `Here are all entries in list \`${listname}\``;
-                            for(const idx in results) msg += (idx ? '\n- ' : '- ') + results.entry;
+                            for(const idx in results) msg += (idx ? '\n- ' : '- ') + results[idx].entry;
                             sendMsg(res, msg);
                         }
                         else sendMsg(res, `No entry in list ${listname}!`);
@@ -135,15 +136,42 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             return;
         }
 
+        if (name === 'remove' && data.options[0]){
+            var listname = data.options[0].value;
+            SQLpool.query(`DELETE FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                if( results.length )
+                    SQLpool.query(`DROP TABLE table${results[0].id}`, function (error, results, fields) {
+                        sendMsg(res, `Successfully remove \`${listname}\`!`)
+                    })
+                else sendMsg(res, `List \`${listname}\` doesn't exist!`);
+            })
+            return;
+        }
+
+        if (name === 'draw' && data.options[0]){
+            var listname = data.options[0].value;
+            SQLpool.query(`SELECT * FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                if( results.length )
+                    SQLpool.query(`SELECT entry FROM table${results[0].id};`, function (error, results, fields) {
+                        var idx = Math.floor(Math.random() * results.length);
+                        sendMsg(res, `Lucky draw! You get \`${results[idx].entry}\` from list \`${listname}\`!`);
+                    })
+                else sendMsg(res, `List \`${listname}\` doesn't exist!`);
+            })
+            return;
+        }
+
         if(name == 'add_to_list' && data.options[0].value && data.options[1].value){
             var entry = data.options[0].value;
             var listname = data.options[1].value;
             SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
                 if( results.length ){
-                    SQLpool.query(`SELECT * FROM table${results[0].id} WHERE entry=(${entry});`, function (error, results, fields) {
+                    var idx = results[0].id;
+                    SQLpool.query(`SELECT * FROM table${results[0].id} WHERE entry=('${entry}');`, function (error, results, fields) {
+                        // console.log(results.length);
                         if(results.length) sendMsg(res, `Entry ${entry} exists in list \`${listname}\`!`)
                         else{
-                            SQLpool.query(`INSERT INTO table${results[0].id} (entry) VALUES (${entry});`, function (error, results, fields) {
+                            SQLpool.query(`INSERT INTO table${idx} (entry) VALUES ('${entry}');`, function (error, results, fields) {
                                 sendMsg(res, `Successfully insert entry ${entry} into list \`${listname}\`!`)
                             })
                         }
@@ -154,6 +182,26 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             return;
         }
 
+        if(name == 'remove_from_list' && data.options[0].value && data.options[1].value){
+            var entry = data.options[0].value;
+            var listname = data.options[1].value;
+            SQLpool.query(`SELECT id FROM table_list WHERE list_name='${listname}' AND guild_id='${guild_id}';`, function (error, results, fields) {
+                if( results.length ){
+                    var idx = results[0].id;
+                    SQLpool.query(`SELECT * FROM table${results[0].id} WHERE entry=('${entry}');`, function (error, results, fields) {
+                        //console.log(results);
+                        if(results.length){
+                            SQLpool.query(`DELETE FROM table${idx} WHERE entry=('${entry}');`, function (error, results, fields) {
+                                sendMsg(res, `Successfully remove entry ${entry} from list \`${listname}\`!`)
+                            })
+                        }
+                        else sendMsg(res, `Entry ${entry} doesn't exist in list \`${listname}\`!`)
+                    })
+                }
+                else sendMsg(res, `List \`${listname}\` doesn't exist!`);
+            })
+            return;
+        }
         // "challenge" command
         if (name === 'challenge' && id) {
             // Interaction context

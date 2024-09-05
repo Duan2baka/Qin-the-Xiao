@@ -39,7 +39,7 @@ const SHOWLISTITEM_COMMAND = {
   options: [
     {
       type: 3,
-      name: 'name',
+      name: 'list',
       description: 'Select a list',
       required: true
     },
@@ -98,6 +98,14 @@ const ADDTOLIST_COMMAND = {
 const REMOVELIST_COMMAND = {
   name: 'remove',
   description: 'Remove a list',
+  options: [
+    {
+      type: 3,
+      name: 'name',
+      description: 'Name your list',
+      required: true
+    },
+  ],
   type: 1,
   integration_types: [0, 1],
   contexts: [0, 1, 2],
