@@ -17,7 +17,7 @@ const SQLpool = mysql.createPool({
     database: sqlinfo.database
 });
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, 'MessageContent', 'GuildMessages'] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, 'MessageContent', 'GuildMessages'] });
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -40,6 +40,10 @@ for (const folder of commandFolders) {
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
+
+/*********************************************Message Detection********************************************************* */
+
+
 client.on(Events.MessageCreate, async (message) => {
     // console.log(message.attachments.size);
     if (message.author.bot) return;
@@ -128,6 +132,10 @@ client.on(Events.MessageCreate, async (message) => {
         }
     });
 })
+
+
+/************************************************Interaction*************************************************************/
+
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 	const command = interaction.client.commands.get(interaction.commandName);
@@ -147,6 +155,30 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 		}
 	}
+});
+
+/********************************Voice channel track********************************************************** */
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+    /*
+        SELECT channelId WHERE guildId='${guildid}';
+        if NULL return;
+    */
+    var unix = Math.round(+new Date()/1000);
+    var userId=oldState.id;
+    if (oldState.channelId === null){
+        /*
+            INSERT INTO tablename (guildId, userId, timestamp, status) VALUES (,,unix,0)
+        */
+    }
+    else if (newState.channelId === null){
+        /*
+            SELECT timestamp FROM tablename WHERE guildId='${}' AND userId='${}'
+            INSERT INTO tablename (guildId, userId, timestamp) VALUES (,,unix,1)
+        */
+
+    }
+    else return;
 });
 
 client.login(token);
