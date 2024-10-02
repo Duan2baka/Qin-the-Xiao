@@ -1,28 +1,17 @@
 {
-  "name": "discord-custom-list-bot",
-  "private": true,
+  "name": "discord-list-bot-discordjs",
   "version": "1.0.0",
-  "description": "Discord custom list app",
-  "main": "app.js",
-  "type": "module",
-  "engines": {
-    "node": ">=18.x"
-  },
+  "main": "index.js",
   "scripts": {
-    "start": "node app.js",
-    "register": "node commands.js",
-    "dev": "nodemon app.js"
+    "start": "node index.js",
+    "register": "node deploy-command.js"
   },
   "author": "Duan2baka",
   "license": "MIT",
+  "description": "",
   "dependencies": {
-    "discord-interactions": "^4.0.0",
     "discord.js": "^14.16.3",
-    "dotenv": "^16.0.3",
-    "express": "^4.19.2",
-    "mysql": "github:mysqljs/mysql"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.0"
+    "dotenv": "^16.4.5",
+    "mysql": "^2.18.1"
   }
 }
