@@ -2,6 +2,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
+const https = require('https');
+const FormData = require('form-data');
+const axios = require('axios');
+const ffmpeg = require('fluent-ffmpeg');
 
 var sqlinfo = require('./database/userinfo.json');
 var mysql = require('mysql');
@@ -37,7 +41,79 @@ client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 client.on(Events.MessageCreate, async (message) => {
-    // console.log(123);
+    // console.log(message.attachments.size);
+    if (message.author.bot) return;
+    message.attachments.forEach(item => {
+        if(item.contentType === 'audio/ogg'){
+            var id = item.id
+            var url = item.url;
+            https.get(url, (res) => {
+                const relative_path = `./tmp/audio/${id}.ogg`;
+                const relative_path_wav = `./tmp/audio/${id}.wav`;
+                const writeStream = fs.createWriteStream(relative_path);
+                res.pipe(writeStream);
+                writeStream.on("finish", () => {
+                    writeStream.close();
+                    console.log("Download Completed!");
+
+                    ffmpeg(relative_path)
+                    .toFormat('wav')
+                    .on('error', (err) => {
+                        console.log('An error occurred: ' + err.message);
+                    })
+                    .on('end', () => {
+                        console.log('Processing finished !');
+
+                        target_url = "http://127.0.0.1:9977/api"
+
+                        const formData = new FormData();
+                        formData.append('file', fs.createReadStream(path.resolve(__dirname, relative_path_wav)));
+                        formData.append('language', 'zh');
+                        formData.append('model', 'large-v3');
+                        formData.append('response_format', 'json');
+                        axios({
+                            method: 'post',
+                            url: target_url,
+                            data: formData,
+                            headers: {
+                                ...formData.getHeaders(),
+                            },
+                            timeout: 60000
+                        })
+                        .then(response => {
+                            var msg = 'The voice message has been converted to text:\n\n';
+                            response.data['data'].forEach(item => {
+                                if(!(item['text'] === '请转录为中文简体。' || 
+                                    item['text'] === '感谢观看,下次见!' ||
+                                    item['text'] === '请不吝点赞 订阅 转发 打赏支持明镜与点点栏目'))
+                                    msg = msg + item['text'] + '\n';
+                            })
+                            console.log(msg);
+                            message.reply(msg);
+                            fs.unlink(path.resolve(__dirname, relative_path),(err) => {
+                                if (err) {
+                                    console.error('Error deleting file:', err);
+                                    return;
+                                }
+                                console.log('File deleted successfully');
+                            });
+                            fs.unlink(path.resolve(__dirname, relative_path_wav),(err) => {
+                                if (err) {
+                                    console.error('Error deleting file:', err);
+                                    return;
+                                }
+                                console.log('File deleted successfully');
+                            });
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                    })
+                    .save(relative_path_wav);
+                })
+            })
+        }
+    });
 })
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
