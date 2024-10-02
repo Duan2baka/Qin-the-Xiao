@@ -54,7 +54,7 @@ client.on(Events.MessageCreate, async (message) => {
                 res.pipe(writeStream);
                 writeStream.on("finish", () => {
                     writeStream.close();
-                    console.log("Download Completed!");
+                    // console.log("Download Completed!");
 
                     ffmpeg(relative_path)
                     .toFormat('wav')
@@ -62,15 +62,16 @@ client.on(Events.MessageCreate, async (message) => {
                         console.log('An error occurred: ' + err.message);
                     })
                     .on('end', () => {
-                        console.log('Processing finished !');
+                        // console.log('Processing finished !');
 
                         target_url = "http://127.0.0.1:9977/api"
 
+                        var msg = 'The voice message has been converted to text:\n\nChinese version:\n\`';
                         const formData = new FormData();
                         formData.append('file', fs.createReadStream(path.resolve(__dirname, relative_path_wav)));
                         formData.append('language', 'zh');
-                        formData.append('model', 'large-v3');
-                        formData.append('response_format', 'json');
+                        formData.append('model', 'large-v2');
+                        formData.append('response_format', 'text');
                         axios({
                             method: 'post',
                             url: target_url,
@@ -81,28 +82,40 @@ client.on(Events.MessageCreate, async (message) => {
                             timeout: 60000
                         })
                         .then(response => {
-                            var msg = 'The voice message has been converted to text:\n\n';
-                            response.data['data'].forEach(item => {
-                                if(!(item['text'] === '请转录为中文简体。' || 
-                                    item['text'] === '感谢观看,下次见!' ||
-                                    item['text'] === '请不吝点赞 订阅 转发 打赏支持明镜与点点栏目'))
-                                    msg = msg + item['text'] + '\n';
+                            msg += response.data['data'] + '\`'
+                            const formData = new FormData();
+                            formData.append('file', fs.createReadStream(path.resolve(__dirname, relative_path_wav)));
+                            formData.append('language', 'zh');
+                            formData.append('model', 'distil-large-v3');
+                            formData.append('response_format', 'text');
+                            axios({
+                                method: 'post',
+                                url: target_url,
+                                data: formData,
+                                headers: {
+                                    ...formData.getHeaders(),
+                                },
+                                timeout: 60000
+                            }).then(response => {
+                                msg += '\n\nEnglish version:\n\`' + response.data['data'] + '\`'
+                                message.reply(msg);
+                                fs.unlink(path.resolve(__dirname, relative_path),(err) => {
+                                    if (err) {
+                                        console.error('Error deleting file:', err);
+                                        return;
+                                    }
+                                    // console.log('File deleted successfully');
+                                });
+                                fs.unlink(path.resolve(__dirname, relative_path_wav),(err) => {
+                                    if (err) {
+                                        console.error('Error deleting file:', err);
+                                        return;
+                                    }
+                                    // console.log('File deleted successfully');
+                                });
                             })
-                            console.log(msg);
-                            message.reply(msg);
-                            fs.unlink(path.resolve(__dirname, relative_path),(err) => {
-                                if (err) {
-                                    console.error('Error deleting file:', err);
-                                    return;
-                                }
-                                console.log('File deleted successfully');
-                            });
-                            fs.unlink(path.resolve(__dirname, relative_path_wav),(err) => {
-                                if (err) {
-                                    console.error('Error deleting file:', err);
-                                    return;
-                                }
-                                console.log('File deleted successfully');
+                            .catch(error => {
+                                console.error(error);
                             });
                         })
                         .catch(error => {
