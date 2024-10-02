@@ -11,7 +11,7 @@ import {
 import { getRandomEmoji, DiscordRequest } from './utils.js';
 import { getShuffledOptions, getResult } from './game.js';
 import { SQLpool } from './database/connect.js'
-
+//test change
 // Create an express app
 const app = express();
 // Get port, or default to 3000
