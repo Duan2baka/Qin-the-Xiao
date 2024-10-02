@@ -93,7 +93,6 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
     // Interaction type and data
     const { type, id, data, guild_id } = req.body;
     for(const idx in data.options) data.options[idx].value = data.options[idx].value.replaceAll(' ','').replaceAll(';','').replaceAll(',','');
-    console.log(req);
     /**
      * Handle verification requests
      */
