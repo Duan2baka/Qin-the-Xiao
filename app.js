@@ -24,6 +24,62 @@ const activeGames = {};
  * Interactions endpoint URL where Discord will send HTTP requests
  * Parse request body and verifies incoming requests using discord-interactions package
  */
+/*
+app.on('messageCreate',verifyKeyMiddleware(process.env.PUBLIC_KEY),  async (message) => {
+    if (message.author.bot) return;
+    console.log('123123123')
+    if (message.content.toLowerCase().startsWith('hey google')) {
+      const questions = [
+        'what do you look like',
+        'how old are you',
+        'do you ever get tired',
+        'thanks',
+      ];
+      const answers = [
+        'Imagine the feeling of a friendly hug combined with the sound of laughter. Add a librarian’s love of books, mix in a sunny disposition and a dash of unicorn sparkles, and voila!',
+        'I was launched in 2021, so I am still fairly young. But I’ve learned so much!',
+        'It would be impossible to tire of our conversation.',
+        'You are welcome!',
+      ];
+  
+      // send the message and wait for it to be sent
+      const confirmation = await message.channel.send(`I'm listening, ${message.author}`);
+      // filter checks if the response is from the author who typed the command
+      const filter = (m) => m.author.id === message.author.id;
+      // set up a message collector to check if there are any responses
+      const collector = confirmation.channel.createMessageCollector(filter, {
+        // set up the max wait time the collector runs (optional)
+        time: 60000,
+      });
+  
+      // fires when a response is collected
+      collector.on('collect', async (msg) => {
+        if (msg.content.toLowerCase().startsWith('what time is it')) {
+          return message.channel.send(`The current time is ${new Date().toLocaleTimeString()}.`);
+        }
+  
+        const index = questions.findIndex((q) =>
+          msg.content.toLowerCase().startsWith(q),
+        );
+  
+        if (index >= 0) {
+          return message.channel.send(answers[index]);
+        }
+  
+        return message.channel.send(`I don't have the answer for that...`);
+      });
+  
+      // fires when the collector is finished collecting
+      collector.on('end', (collected, reason) => {
+        // only send a message when the "end" event fires because of timeout
+        if (reason === 'time') {
+          message.channel.send(
+            `${message.author}, it's been a minute without any question, so I'm no longer interested... 🙄`,
+          );
+        }
+      });
+    }
+  });*/
 app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
 
     function sendMsg(res, msg){
@@ -36,8 +92,8 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
     }
     // Interaction type and data
     const { type, id, data, guild_id } = req.body;
-    for(const idx in data.options) data.options[idx].value.replaceAll(' ','').replaceAll(';','').replaceAll(',','');
-    //console.log(req);
+    for(const idx in data.options) data.options[idx].value = data.options[idx].value.replaceAll(' ','').replaceAll(';','').replaceAll(',','');
+    console.log(req);
     /**
      * Handle verification requests
      */
@@ -203,130 +259,9 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             })
             return;
         }
-        // "challenge" command
-        if (name === 'challenge' && id) {
-            // Interaction context
-            const context = req.body.context;
-            // User ID is in user field for (G)DMs, and member for servers
-            const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
-            // User's object choice
-            const objectName = req.body.data.options[0].value;
-
-            // Create active game using message ID as the game ID
-            activeGames[id] = {
-                id: userId,
-                objectName,
-            };
-            return res.send({
-                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data: {
-                    // Fetches a random emoji to send from a helper function
-                    content: `Rock papers scissors challenge from <@${userId}>`,
-                    components: [
-                        {
-                            type: MessageComponentTypes.ACTION_ROW,
-                            components: [
-                                {
-                                    type: MessageComponentTypes.BUTTON,
-                                    // Append the game ID to use later on
-                                    custom_id: `accept_button_${req.body.id}`,
-                                    label: 'Accept',
-                                    style: ButtonStyleTypes.PRIMARY,
-                                },
-                            ],
-                        },
-                    ],
-                },
-            });
-        }
 
         console.error(`unknown command: ${name}`);
         return res.status(400).json({ error: 'unknown command' });
-    }
-
-    /**
-     * Handle requests from interactive components
-     * See https://discord.com/developers/docs/interactions/message-components#responding-to-a-component-interaction
-     */
-    if (type === InteractionType.MESSAGE_COMPONENT) {
-        // custom_id set in payload when sending message component
-        const componentId = data.custom_id;
-
-        if (componentId.startsWith('accept_button_')) {
-            // get the associated game ID
-            const gameId = componentId.replace('accept_button_', '');
-            // Delete message with token in request body
-            const endpoint = `webhooks/${process.env.APP_ID}/${req.body.token}/messages/${req.body.message.id}`;
-            try {
-                await res.send({
-                    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: {
-                        content: 'What is your object of choice?',
-                        // Indicates it'll be an ephemeral message
-                        flags: InteractionResponseFlags.EPHEMERAL,
-                        components: [
-                            {
-                                type: MessageComponentTypes.ACTION_ROW,
-                                components: [
-                                    {
-                                        type: MessageComponentTypes.STRING_SELECT,
-                                        // Append game ID
-                                        custom_id: `select_choice_${gameId}`,
-                                        options: getShuffledOptions(),
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                });
-                // Delete previous message
-                await DiscordRequest(endpoint, { method: 'DELETE' });
-            } catch (err) {
-                console.error('Error sending message:', err);
-            }
-
-        } else if (componentId.startsWith('select_choice_')) {
-            // get the associated game ID
-            const gameId = componentId.replace('select_choice_', '');
-
-            if (activeGames[gameId]) {
-                // Interaction context
-                const context = req.body.context;
-                // Get user ID and object choice for responding user
-                // User ID is in user field for (G)DMs, and member for servers
-                const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
-                console.log(`<@${userId}>`);
-                const objectName = data.values[0];
-                // Calculate result from helper function
-                const resultStr = getResult(activeGames[gameId], {
-                    id: userId,
-                    objectName,
-                });
-
-                // Remove game from storage
-                delete activeGames[gameId];
-                // Update message with token in request body
-                const endpoint = `webhooks/${process.env.APP_ID}/${req.body.token}/messages/${req.body.message.id}`;
-
-                try {
-                    // Send results
-                    await res.send({
-                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                        data: { content: resultStr },
-                    });
-                    // Update ephemeral message
-                    await DiscordRequest(endpoint, {
-                        method: 'PATCH',
-                        body: {
-                            content: 'Nice choice ' + getRandomEmoji(),
-                            components: [],
-                        },
-                    });
-                } catch (err) {
-                    console.error('Error sending message:', err);
-                }
-            }
-        }
     }
     else {
         console.error('unknown interaction type', type);

@@ -149,6 +149,29 @@ const DRAWFROMLIST_COMMAND = {
   contexts: [0, 1, 2],
 };
 
+const roll_COMMAND = {
+  name: 'roll',
+  description: 'Roll a dice!',
+  type: 1,
+  options: [
+    {
+      type: 4,
+      name: 'faces',
+      description: 'roll a dice with specified faces',
+      required: true
+    },
+  ],
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+const d6_COMMAND = {
+  name: 'd6',
+  description: 'd6',
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
 // Command containing options
 const CHALLENGE_COMMAND = {
   name: 'challenge',
@@ -168,6 +191,6 @@ const CHALLENGE_COMMAND = {
 };
 
 const ALL_COMMANDS = [TEST_COMMAND, LOVE_COMMAND, CREATELIST_COMMAND, REMOVELIST_COMMAND, ADDTOLIST_COMMAND, DRAWFROMLIST_COMMAND
-  , SHOWLIST_COMMAND, REMOVEFROMLIST_COMMAND, CHALLENGE_COMMAND, SHOWLISTITEM_COMMAND];
+  , SHOWLIST_COMMAND, REMOVEFROMLIST_COMMAND, CHALLENGE_COMMAND, SHOWLISTITEM_COMMAND,roll_COMMAND,d6_COMMAND];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
