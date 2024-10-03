@@ -129,5 +129,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+config.json
 database/userinfo.json
 note/
+tmp/

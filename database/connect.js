@@ -1,22 +1,26 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+// import { createRequire } from "module";
+// const require = createRequire(import.meta.url);
 
 var sqlinfo = require('./userinfo.json');
 var mysql = require('mysql');
 
-export var SQLpool = mysql.createPool({
+const SQLpool = mysql.createPool({
     host: sqlinfo.host,
     user: sqlinfo.user,
     password: sqlinfo.password,
     database: sqlinfo.database
 });
 
+
+console.log("Connected to SQL server successfully!");
+
+exports = { SQLpool };
 /*
-pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
+SQLpool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
     if (error) throw error;
     console.log(results[0].solution)
-})
-*/
+})*/
+
 /*
 export async function SQLquery(querystr){
     try {
