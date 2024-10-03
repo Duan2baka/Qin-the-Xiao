@@ -160,25 +160,67 @@ client.on(Events.InteractionCreate, async interaction => {
 /********************************Voice channel track********************************************************** */
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-    /*
-        SELECT channelId WHERE guildId='${guildid}';
-        if NULL return;
-    */
-    var unix = Math.round(+new Date()/1000);
-    var userId=oldState.id;
-    if (oldState.channelId === null){
-        /*
-            INSERT INTO tablename (guildId, userId, timestamp, status) VALUES (,,unix,0)
-        */
+    var guildId = oldState.guild.id;
+    function getDateTime(timestamp, timezone){
+        let tmp = new Date(timestamp);
+        return new Date(tmp.setHours(tmp.getHours() + timezone)).toISOString().slice(0, 19).replace('T',' ') + `***(GMT ${timezone > 0 ? `+${timezone}`: timezone})***`;
     }
-    else if (newState.channelId === null){
-        /*
-            SELECT timestamp FROM tablename WHERE guildId='${}' AND userId='${}'
-            INSERT INTO tablename (guildId, userId, timestamp) VALUES (,,unix,1)
-        */
+    function formatSec(sec){
+        let date = new Date(null);
+        date.setSeconds(sec);
+        return date.toISOString().slice(11, 19);
+    }
+    SQLpool.query(`SELECT channelId from channel_table WHERE guildId='${guildId}'`, function (error, results, fields) {
+        if(results.length){
+            let timestamp = Date.now();
+            let userId=oldState.id;
+            let log_channel = results[0].channelId;
+            
+            client.users.fetch(userId).then(function(user){
+                // console.log(user);
+                // console.log(log_channel);
+                if (oldState.channelId === null){
+                    try{
+                        SQLpool.query(`INSERT INTO voice_table (guildId, userId, timestamp, status) VALUES ('${guildId}','${userId}','${timestamp}', 0)`, function (error, results, fields) {
+                            if(error) console.log(error);
+                            var msg = `User ${user} ***joined*** voice channel at:\n`;
+                            SQLpool.query(`SELECT timezone FROM timezone_table WHERE guildId='${guildId}';`,  function (error, results, fields){
+                                // console.log(results)
+                                if(results.length)
+                                    results.forEach(item => {
+                                        msg = msg + '- ' + getDateTime(timestamp, item.timezone) + '\n';
+                                    });
+                                else msg = msg + '- ' + getDateTime(timestamp, 8) + '\n';
+                                client.channels.cache.get(log_channel).send(msg);
+                            });
+                        });
+                    } catch(e){
+                        console.log(e);
+                    }
+                }
+                else if (newState.channelId === null){
+                    SQLpool.query(`SELECT timestamp FROM voice_table WHERE guildId='${guildId}' AND userId='${userId}'`, function (error, results, fields) {
+                        if(results.length == 0) return;
+                        var msg = `User ${user} ***leave*** voice channel at:\n`;
+                        let last_time = results[results.length - 1].timestamp;
+                        let duration = formatSec((timestamp - last_time)/1000);
+                        SQLpool.query(`SELECT timezone FROM timezone_table WHERE guildId='${guildId}';`,  function (error, results, fields){
+                            // console.log(results)
+                            if(results.length)
+                                results.forEach(item => {
+                                    msg = msg + '- ' + getDateTime(timestamp, item.timezone) + '\n';
+                                });
+                            else msg = msg + '- ' + getDateTime(timestamp, 8) + '\n';
 
-    }
-    else return;
+                            msg = msg + `The duration of the voice chat is \`${duration}\`!`;
+                            client.channels.cache.get(log_channel).send(msg);
+                        });
+                    });
+                }
+                else return;
+            });
+        }
+    });
 });
 
 client.login(token);
