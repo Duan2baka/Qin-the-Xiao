@@ -12,18 +12,19 @@ module.exports = {
             .setRequired(true)
         ),
 	async execute(interaction, SQLpool) {
-		// console.log(interaction.options.getString('name'))
 		channel = interaction.channel;
         channelId = channel.id;
         guildId = channel.guildId;
-        /*SQL to add channel.id to channel.guildId*/
-        /*
-            SELECT * FROM tablename  WHERE guildId='${guildId}';
-            if not null:
-                UPDATE tablename SET channelId='${channelId}' WHERE guildId='${guildId}';
-            else:
-                INSERT INTO tablename (guildId, channelId) VALUES ('${guildId}', '${channelId}')
-        
-        */
+        SQLpool.query(`SELECT * FROM channel_table WHERE guildId='${guildId}';`, function (error, results, fields) {
+            if(results.length)
+                SQLpool.query(`UPDATE channel_table SET channelId='${channelId}' WHERE guildId='${guildId}';`, function (error, results, fields) {
+                    if(!error) interaction.reply('Update log channel successfully!');
+                    else interaction.reply('Unknown error!');
+                });
+            else SQLpool.query(`INSERT INTO channel_table (guildId, channelId) VALUES ('${guildId}', '${channelId}');`, function (error, results, fields) {
+                if(!error) interaction.reply('Set log channel successfully!');
+                else interaction.reply('Unknown error!');
+            });
+        })
 	},
 };
