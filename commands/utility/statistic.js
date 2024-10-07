@@ -12,6 +12,6 @@ module.exports = {
               .setRequired(true),
           ),
 	async execute(interaction, SQLpool) {
-
+        interaction.reply('This function has not been inplemented yet!')
 	},
 };
