@@ -225,7 +225,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
                                 msg = msg + `\nThe duration of the voice chat is \`${duration}\`!`;
                                 const embedMsg = new EmbedBuilder()
                                     .setColor(0xB8001F)
-                                    .setTitle('[Join Voice Channel]')
+                                    .setTitle('[Leave Voice Channel]')
                                     .setThumbnail(user.displayAvatarURL())
                                     .setDescription(msg)
                                     .setTimestamp()
