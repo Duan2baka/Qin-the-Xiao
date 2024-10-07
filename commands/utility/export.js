@@ -13,6 +13,7 @@ module.exports = {
               .setRequired(true),
           ),
 	async execute(interaction, SQLpool) {
+        // console.log(interaction.user.name)
         /*
         // console.log(interaction);
 		let channel = interaction.channel;
