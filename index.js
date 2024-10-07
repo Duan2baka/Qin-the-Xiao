@@ -230,7 +230,10 @@ client.on('voiceStateUpdate', (oldState, newState) => {
                                     .setDescription(msg)
                                     .setTimestamp()
                                     .setFooter({ text: 'Voice Channel Logger', iconURL: client.user.displayAvatarURL() });
-                                client.channels.cache.get(log_channel).send({embeds: [embedMsg]});
+                                    SQLpool.query(`INSERT INTO voice_table (guildId, userId, timestamp, status) VALUES ('${guildId}','${userId}','${timestamp}', 1)`, function (error, results, fields) {
+                                    
+                                        client.channels.cache.get(log_channel).send({embeds: [embedMsg]});
+                                    })
                                 //client.channels.cache.get(log_channel).send(msg);
                         });
                     });
