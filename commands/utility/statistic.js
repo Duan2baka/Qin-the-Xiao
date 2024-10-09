@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { ChannelType } = require('discord.js');
+const axios = require('axios');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -12,6 +13,7 @@ module.exports = {
               .setRequired(true),
           ),
 	async execute(interaction, SQLpool) {
-        interaction.reply('This function has not been inplemented yet!')
+        interaction.reply('This function has not been inplemented yet!');
+
 	},
 };
