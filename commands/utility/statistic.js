@@ -28,14 +28,14 @@ module.exports = {
             for(var idx in results){
                 var record = results[idx];
                 var t = Number(record['timestamp']);
-                if((now - t) / 1000 / 3600 / 24 <= 7) tot10 = tot10 + ((record['status'] == 1 && tot10 == 0) ? 0 : ((record['status'] == 0 ? -1 : 1) * t));
+                if((now - t) / 1000 / 3600 / 24 <= 10) tot10 = tot10 + ((record['status'] == 1 && tot10 == 0) ? 0 : ((record['status'] == 0 ? -1 : 1) * t));
                 tot = tot + (record['status'] == 0 ? -1 : 1) * t;
             }
             if(results[results.length - 1]['status'] == 0) tot = tot + now, tot10 = tot10 + now;
             var sec = Math.round(tot / 1000);
             var sec10 = Math.round(tot10 / 1000);
-            var msg = `Total time in voice channel:\n**${Math.round(sec / 3600)}** hours, **${Math.round(sec / 60 % 60)}** minutes and **${Math.round(sec % 60)}** seconds!`;
-            msg = msg + `\nTotal time in voice channel(previous 10 days):\n**${Math.round(sec10 / 3600)}** hours, **${Math.round(sec10 / 60 % 60)}** minutes and **${Math.round(sec10 % 60)}** seconds!`;
+            var msg = `Total time of ${user} in voice channel:\n**${Math.round(sec / 3600)}** hours, **${Math.round(sec / 60 % 60)}** minutes and **${Math.round(sec % 60)}** seconds!`;
+            msg = msg + `\nIn previous 10 days:\n**${Math.round(sec10 / 3600)}** hours, **${Math.round(sec10 / 60 % 60)}** minutes and **${Math.round(sec10 % 60)}** seconds!`;
             interaction.reply(msg);
         });
 	},
