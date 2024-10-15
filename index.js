@@ -70,7 +70,7 @@ client.on(Events.MessageCreate, async (message) => {
 
                         target_url = "http://127.0.0.1:9977/api"
 
-                        var msg = 'The voice message has been converted to text:\n\nChinese version:\n\`';
+                        var msg = 'The voice message has been converted to text:\n\n`';
                         const formData = new FormData();
                         formData.append('file', fs.createReadStream(path.resolve(__dirname, relative_path_wav)));
                         formData.append('language', 'zh');
@@ -101,7 +101,7 @@ client.on(Events.MessageCreate, async (message) => {
                                 },
                                 timeout: 60000
                             }).then(response => {
-                                msg += '\n\nEnglish version:\n\`' + response.data['data'] + '\`'
+                                // msg += '\n\nEnglish version:\n\`' + response.data['data'] + '\`'
                                 message.reply(msg);
                                 fs.unlink(path.resolve(__dirname, relative_path),(err) => {
                                     if (err) {
