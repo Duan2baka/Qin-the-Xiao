@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, Partials } = require('discord.js');
 const { token } = require('./config.json');
 const https = require('https');
 const FormData = require('form-data');
@@ -10,6 +10,10 @@ const ffmpeg = require('fluent-ffmpeg');
 var sqlinfo = require('./database/userinfo.json');
 var mysql = require('mysql');
 
+const processString = require('./utils/sql/processString')
+const removeThinkTag = require('./utils/deepseek/removeThinkTag')
+const markdownThinkTag = require('./utils/deepseek/markdownThinkTag')
+
 const SQLpool = mysql.createPool({
     host: sqlinfo.host,
     user: sqlinfo.user,
@@ -17,7 +21,20 @@ const SQLpool = mysql.createPool({
     database: sqlinfo.database
 });
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, 'MessageContent', 'GuildMessages'] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.DirectMessages,
+        'MessageContent',
+        'GuildMessages'
+    ],
+
+    partials: [
+        Partials.Channel,
+        Partials.Message
+    ]
+});
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -47,6 +64,78 @@ client.once(Events.ClientReady, readyClient => {
 client.on(Events.MessageCreate, async (message) => {
     // console.log(message.attachments.size);
     if (message.author.bot) return;
+    if ((!message.guild) || message.mentions.users.has(client.user.id)) {
+        const guildId = message.guild ? message.guild.id : -1;
+        const userId = message.author.id;
+        var text = '';
+        const mentionPattern = `<@${client.user.id}>`;
+        const regex = new RegExp(mentionPattern);
+        var text = message.content.replace(regex, '');
+        if(!text.length){
+            message.reply('Please input something!');
+            return;
+        }
+
+        SQLpool.query(`SELECT id,conversationId from deepseek WHERE guildId='${guildId}' AND userId='${userId}'`, function (error, results, fields) {
+            if(results.length){
+                var id = results[0].id;
+                var conversationId = results[0].conversationId;
+                SQLpool.query(`SELECT think, content from deepseektable${id} WHERE id='${conversationId}'`, function (error, results, fields) {
+                    if(results.length){
+                        let msg = JSON.parse(results[0].content);
+                        msg.push({'role': 'user', 'content': text});
+                        axios.post('http://100.90.99.3:9999/api', { data: msg })
+                        .then(response => {
+                            let data = response.data['data'];
+                            let responseData = data[data.length - 1]['content'];
+                            //console.log(responseData);
+                            message.reply(markdownThinkTag(responseData));
+                            msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            // console.log(`${msg}`)
+                            SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id='${conversationId};`,
+                                msg, function (error, results, fields) {
+                                    if(!results) message.reply('Error when update conversation!');
+                            });
+                        })
+                        .catch(error => {
+                            console.error('HTTP Error:', error);
+                        });
+                    }
+                });
+            }
+            else{
+                SQLpool.query(`INSERT INTO deepseek (userId, guildId, conversationId) VALUES ('${userId}', '${guildId}', 1);`, function (error, results, fields) {
+                    // console.log(results.insertId);
+                    var insertId = results.insertId;
+                    SQLpool.query(`CREATE TABLE deepseektable${insertId} (id int NOT NULL AUTO_INCREMENT,name varchar(45) NULL,think int NULL,content json NULL,PRIMARY KEY (id));`,function (error, results, fields) {
+                        if(results){
+                            let msg = [];
+                            msg.push({'role': 'user', 'content': text});
+                            axios.post('http://100.90.99.3:9999/api', { data: msg })
+                            .then(response => {
+                                let data = response.data['data'];
+                                let responseData = data[data.length - 1]['content'];
+                                message.reply(markdownThinkTag(responseData));
+                                msg = removeThinkTag(data);
+                                msg = JSON.stringify(msg)
+                                // console.log(`${msg}`)
+                                SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
+                                    ['Conversation1', 1, msg], function (error, results, fields) {
+                                        if(!results) message.reply('Error when creating new conversation!');
+                                });
+                            })
+                            .catch(error => {
+                                console.error('HTTP Error:', error);
+                            });
+                        }
+                        else message.reply('Error when creating new database!');
+                    })
+                });
+            }
+        });
+    }
+    /****************Transcript to Text****************/
     message.attachments.forEach(item => {
         if(item.contentType === 'audio/ogg'){
             var id = item.id
