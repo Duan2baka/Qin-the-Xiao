@@ -283,7 +283,7 @@ function checkBadminton(){
 }
 
 client.on('ready', () => {
-    setInterval(checkBadminton, 1000 * 60 * 60) // Runs every 1 hour
+    // setInterval(checkBadminton, 1000 * 60 * 60) // Runs every 1 hour
 })
 
 client.login(token);
