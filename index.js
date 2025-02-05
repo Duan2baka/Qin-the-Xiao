@@ -13,6 +13,7 @@ var mysql = require('mysql');
 const processString = require('./utils/sql/processString')
 const removeThinkTag = require('./utils/deepseek/removeThinkTag')
 const markdownThinkTag = require('./utils/deepseek/markdownThinkTag')
+const deepReply = require('./utils/deepseek/reply')
 
 const SQLpool = mysql.createPool({
     host: sqlinfo.host,
@@ -83,19 +84,20 @@ client.on(Events.MessageCreate, async (message) => {
                 SQLpool.query(`SELECT think, content from deepseektable${id} WHERE id='${conversationId}'`, function (error, results, fields) {
                     if(results.length){
                         let msg = JSON.parse(results[0].content);
+                        let think = results[0].think;
                         msg.push({'role': 'user', 'content': text});
                         axios.post('http://100.90.99.3:9999/api', { data: msg })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
                             //console.log(responseData);
-                            message.reply(markdownThinkTag(responseData));
                             msg = removeThinkTag(data);
                             msg = JSON.stringify(msg)
-                            // console.log(`${msg}`)
-                            SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id='${conversationId};`,
-                                msg, function (error, results, fields) {
-                                    if(!results) message.reply('Error when update conversation!');
+                            deepReply(message, responseData, EmbedBuilder, think);
+                            //console.log(msg);
+                            SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
+                                [msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error while update conversation!');
                             });
                         })
                         .catch(error => {
@@ -116,7 +118,7 @@ client.on(Events.MessageCreate, async (message) => {
                             .then(response => {
                                 let data = response.data['data'];
                                 let responseData = data[data.length - 1]['content'];
-                                message.reply(markdownThinkTag(responseData));
+                                deepReply(message, responseData, EmbedBuilder, 1);
                                 msg = removeThinkTag(data);
                                 msg = JSON.stringify(msg)
                                 // console.log(`${msg}`)
