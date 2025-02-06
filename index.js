@@ -85,7 +85,7 @@ client.on(Events.MessageCreate, async (message) => {
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
                         msg.push({'role': 'user', 'content': text});
-                        axios.post('http://100.90.99.3:9999/api', { data: msg })
+                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
@@ -113,8 +113,8 @@ client.on(Events.MessageCreate, async (message) => {
                         if(results){
                             let msg = [];
                             msg.push({'role': 'user', 'content': text});
-                            axios.post('http://100.90.99.3:9999/api', { data: msg },
-                                timeout: 60000)
+                            axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 }
+                                )
                             .then(response => {
                                 let data = response.data['data'];
                                 let responseData = data[data.length - 1]['content'];
