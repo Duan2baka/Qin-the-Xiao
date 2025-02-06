@@ -80,7 +80,7 @@ client.on(Events.MessageCreate, async (message) => {
             if(results.length){
                 var id = results[0].id;
                 var conversationId = results[0].conversationId;
-                SQLpool.query(`SELECT think, content from deepseektable${id} WHERE id='${conversationId}'`, function (error, results, fields) {
+                SQLpool.query(`SELECT think, content from deepseektable${id} WHERE id=${conversationId}`, function (error, results, fields) {
                     if(results.length){
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
@@ -103,6 +103,28 @@ client.on(Events.MessageCreate, async (message) => {
                             console.error('HTTP Error:', error);
                         });
                     }
+                    else{
+                        let msg = [];
+                        msg.push({'role': 'user', 'content': text});
+                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                        .then(response => {
+                            let data = response.data['data'];
+                            let responseData = data[data.length - 1]['content'];
+                            deepReply(message, responseData, EmbedBuilder, 1);
+                            msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            // console.log(`${msg}`)
+                            SQLpool.query(`INSERT INTO deepseektable${id} (name, think, content) VALUES (?,?,?)`,
+                                ['New Conversation', 1, msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error when creating new conversation!');
+                                    else SQLpool.query(`UPDATE deepseek SET conversationId='${results.insertId}' WHERE guildId='${guildId}' AND userId='${userId}'`,
+                                        function (error, results, fields) { if(!results) message.reply('Error when creating new conversation!');});
+                            });
+                        })
+                        .catch(error => {
+                            console.error('HTTP Error:', error);
+                        });
+                    }
                 });
             }
             else{
@@ -113,8 +135,7 @@ client.on(Events.MessageCreate, async (message) => {
                         if(results){
                             let msg = [];
                             msg.push({'role': 'user', 'content': text});
-                            axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 }
-                                )
+                            axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
                             .then(response => {
                                 let data = response.data['data'];
                                 let responseData = data[data.length - 1]['content'];
@@ -123,7 +144,7 @@ client.on(Events.MessageCreate, async (message) => {
                                 msg = JSON.stringify(msg)
                                 // console.log(`${msg}`)
                                 SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
-                                    ['Conversation1', 1, msg], function (error, results, fields) {
+                                    ['New Conversation', 1, msg], function (error, results, fields) {
                                         if(!results) message.reply('Error when creating new conversation!');
                                 });
                             })

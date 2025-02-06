@@ -1,5 +1,5 @@
 var deepReply = (message, responseData, EmbedBuilder, think) => {
-    console.log(responseData);
+    // console.log(responseData);
     let startIndex = responseData.indexOf('<think>');
     let endIndex = responseData.indexOf('</think>');
 
