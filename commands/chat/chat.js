@@ -1,10 +1,9 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const axios = require('axios');
-
 const ollama = require('ollama').default
-const removeThinkTag = require('../../utils/deepseek/removeThinkTag')
-const markdownThinkTag = require('../../utils/deepseek/markdownThinkTag')
-const getReply = require('../../utils/deepseek/reply').getReply
+const removeThinkTag = require('../../utils/chat/removeThinkTag')
+const markdownThinkTag = require('../../utils/chat/markdownThinkTag')
+const getReply = require('../../utils/chat/reply').getReply
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -20,7 +19,7 @@ module.exports = {
         const mentionPattern = `<@${interaction.applicationId}>`;
         const regex = new RegExp(mentionPattern);
         var text = interaction.options.getString('text').replace(regex, '');
-        interaction.deferReply();
+        interaction.deferReply({ephemeral: true});
         if(!text.length){
             interaction.reply('Please input something!');
             return;
@@ -60,7 +59,7 @@ module.exports = {
                             //console.log(msg)
                             msg.push({'role': 'assistant', 'content': responseData})
                             msg = JSON.stringify(msg)
-                            interaction.editReply(getReply(responseData, 0));
+                            interaction.editReply({...getReply(responseData, 0), ephemeral: true});
                             //console.log(msg);
                             SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
                                 [msg], function (error, results, fields) {
@@ -98,7 +97,7 @@ module.exports = {
                             //console.log(responseData);
                             //msg = removeThinkTag(data);
                             msg = JSON.stringify(msg)
-                            interaction.editReply(getReply(responseData, 0));
+                            interaction.editReply({...getReply(responseData, 0), ephemeral: true});
                             //console.log(msg);
                             
                             SQLpool.query(`INSERT INTO deepseektable${id} (name, think, content) VALUES (?,?,?)`,
@@ -144,7 +143,7 @@ module.exports = {
                                 //console.log(responseData);
                                 //msg = removeThinkTag(data);
                                 msg = JSON.stringify(msg)
-                                interaction.editReply(getReply(responseData, 0));
+                                interaction.editReply({...getReply(responseData, 0), ephemeral: true});
                                 //console.log(msg);
                                 SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
                                     ['New Conversation', 1, msg], function (error, results, fields) {

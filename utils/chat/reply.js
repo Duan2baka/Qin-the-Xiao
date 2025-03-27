@@ -66,7 +66,6 @@ var getReply = (responseData, think) => {
         .setTimestamp()
         .setFooter({ text: 'Gemma3:27B'});
         return {embeds: [embedMsg]};
-        return;
     }
     const thinkMsg = new EmbedBuilder()
     .setColor(0x808080)
