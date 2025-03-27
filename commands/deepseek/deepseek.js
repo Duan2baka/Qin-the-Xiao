@@ -4,7 +4,7 @@ const axios = require('axios');
 const ollama = require('ollama').default
 const removeThinkTag = require('../../utils/deepseek/removeThinkTag')
 const markdownThinkTag = require('../../utils/deepseek/markdownThinkTag')
-const deepReply = require('../../utils/deepseek/reply')
+const getReply = require('../../utils/deepseek/reply').getReply
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -20,6 +20,7 @@ module.exports = {
         const mentionPattern = `<@${interaction.applicationId}>`;
         const regex = new RegExp(mentionPattern);
         var text = interaction.options.getString('text').replace(regex, '');
+        interaction.deferReply();
         if(!text.length){
             interaction.reply('Please input something!');
             return;
@@ -59,11 +60,11 @@ module.exports = {
                             //console.log(msg)
                             msg.push({'role': 'assistant', 'content': responseData})
                             msg = JSON.stringify(msg)
-                            deepReply(interaction, responseData, 0);
+                            interaction.editReply(getReply(responseData, 0));
                             //console.log(msg);
                             SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
                                 [msg], function (error, results, fields) {
-                                    if(!results) interaction.reply('Error while update conversation!');
+                                    if(!results) interaction.editReply('Error while update conversation!');
                             });
                         })
                         .catch(error => {
@@ -97,14 +98,14 @@ module.exports = {
                             //console.log(responseData);
                             //msg = removeThinkTag(data);
                             msg = JSON.stringify(msg)
-                            deepReply(interaction, responseData, 0);
+                            interaction.editReply(getReply(responseData, 0));
                             //console.log(msg);
                             
                             SQLpool.query(`INSERT INTO deepseektable${id} (name, think, content) VALUES (?,?,?)`,
                                 ['New Conversation', 1, msg], function (error, results, fields) {
-                                    if(!results) interaction.reply('Error when creating new conversation!');
+                                    if(!results) interaction.editReply('Error when creating new conversation!');
                                     else SQLpool.query(`UPDATE deepseek SET conversationId='${results.insertId}' WHERE guildId='${guildId}' AND userId='${userId}'`,
-                                        function (error, results, fields) { if(!results) interaction.reply('Error when creating new conversation!');});
+                                        function (error, results, fields) { if(!results) interaction.editReply('Error when creating new conversation!');});
                             });
                         })
                         .catch(error => {
@@ -143,18 +144,18 @@ module.exports = {
                                 //console.log(responseData);
                                 //msg = removeThinkTag(data);
                                 msg = JSON.stringify(msg)
-                                deepReply(interaction, responseData, 0);
+                                interaction.editReply(getReply(responseData, 0));
                                 //console.log(msg);
                                 SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
                                     ['New Conversation', 1, msg], function (error, results, fields) {
-                                        if(!results) interaction.reply('Error when creating new conversation!');
+                                        if(!results) interaction.editReply('Error when creating new conversation!');
                                 });
                             })
                             .catch(error => {
                                 console.error('OLLAMA Error:', error);
                             });
                         }
-                        else interaction.reply('Error when creating new database!');
+                        else interaction.editReply('Error when creating new database!');
                     })
                 });
             }

@@ -13,7 +13,7 @@ var mysql = require('mysql');
 const processString = require('./utils/sql/processString')
 const removeThinkTag = require('./utils/deepseek/removeThinkTag')
 const markdownThinkTag = require('./utils/deepseek/markdownThinkTag')
-const deepReply = require('./utils/deepseek/reply')
+const deepReply = require('./utils/deepseek/reply').deepReply
 
 const SQLpool = mysql.createPool({
     host: sqlinfo.host,
