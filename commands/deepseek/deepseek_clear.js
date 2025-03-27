@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('deepseek_clear')
+		.setName('chat_clear')
 		.setDescription('Clear the history of current conversation'),
 	async execute(interaction, SQLpool) {
 		// console.log(interaction)

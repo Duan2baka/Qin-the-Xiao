@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('deepseek_remove')
+		.setName('chat_remove')
 		.setDescription('Remove current conversation'),
 	async execute(interaction, SQLpool) {
 		// console.log(interaction)
