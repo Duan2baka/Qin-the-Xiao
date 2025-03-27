@@ -6,7 +6,7 @@ const https = require('https');
 const FormData = require('form-data');
 const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
-
+const ollama = require('ollama').default
 var sqlinfo = require('./database/userinfo.json');
 var mysql = require('mysql');
 
@@ -67,7 +67,6 @@ client.on(Events.MessageCreate, async (message) => {
     if ((!message.guild) || message.mentions.users.has(client.user.id)) {
         const guildId = message.guild ? message.guild.id : -1;
         const userId = message.author.id;
-        var text = '';
         const mentionPattern = `<@${client.user.id}>`;
         const regex = new RegExp(mentionPattern);
         var text = message.content.replace(regex, '');
@@ -85,14 +84,14 @@ client.on(Events.MessageCreate, async (message) => {
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
                         msg.push({'role': 'user', 'content': text});
-                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                        /*axios.post('http://127.0.0.1:11434', { data: msg, timeout: 60000 })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
                             //console.log(responseData);
                             msg = removeThinkTag(data);
                             msg = JSON.stringify(msg)
-                            deepReply(message, responseData, EmbedBuilder, think);
+                            deepReply(message, responseData, think);
                             //console.log(msg);
                             SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
                                 [msg], function (error, results, fields) {
@@ -101,16 +100,32 @@ client.on(Events.MessageCreate, async (message) => {
                         })
                         .catch(error => {
                             console.error('HTTP Error:', error);
+                        });*/
+                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        .then(response => {
+                            let responseData = response.message.content;
+                            //console.log(responseData);
+                            //msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            deepReply(message, responseData, 0);
+                            //console.log(msg);
+                            SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
+                                [msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error while update conversation!');
+                            });
+                        })
+                        .catch(error => {
+                            console.error('OLLAMA Error:', error);
                         });
                     }
                     else{
                         let msg = [];
                         msg.push({'role': 'user', 'content': text});
-                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                        /*axios.post('http://127.0.0.1:11434', { data: msg, timeout: 60000 })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
-                            deepReply(message, responseData, EmbedBuilder, 1);
+                            deepReply(message, responseData, 1);
                             msg = removeThinkTag(data);
                             msg = JSON.stringify(msg)
                             // console.log(`${msg}`)
@@ -123,6 +138,25 @@ client.on(Events.MessageCreate, async (message) => {
                         })
                         .catch(error => {
                             console.error('HTTP Error:', error);
+                        });*/
+                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        .then(response => {
+                            let responseData = response.message.content;
+                            //console.log(responseData);
+                            //msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            deepReply(message, responseData, 0);
+                            //console.log(msg);
+                            
+                            SQLpool.query(`INSERT INTO deepseektable${id} (name, think, content) VALUES (?,?,?)`,
+                                ['New Conversation', 1, msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error when creating new conversation!');
+                                    else SQLpool.query(`UPDATE deepseek SET conversationId='${results.insertId}' WHERE guildId='${guildId}' AND userId='${userId}'`,
+                                        function (error, results, fields) { if(!results) message.reply('Error when creating new conversation!');});
+                            });
+                        })
+                        .catch(error => {
+                            console.error('OLLAMA Error:', error);
                         });
                     }
                 });
@@ -135,11 +169,11 @@ client.on(Events.MessageCreate, async (message) => {
                         if(results){
                             let msg = [];
                             msg.push({'role': 'user', 'content': text});
-                            axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                            /*axios.post('http://127.0.0.1:11434', { data: msg, timeout: 60000 })
                             .then(response => {
                                 let data = response.data['data'];
                                 let responseData = data[data.length - 1]['content'];
-                                deepReply(message, responseData, EmbedBuilder, 1);
+                                deepReply(message, responseData, 1);
                                 msg = removeThinkTag(data);
                                 msg = JSON.stringify(msg)
                                 // console.log(`${msg}`)
@@ -150,7 +184,24 @@ client.on(Events.MessageCreate, async (message) => {
                             })
                             .catch(error => {
                                 console.error('HTTP Error:', error);
+                            });*/
+
+                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        .then(response => {
+                            let responseData = response.message.content;
+                            //console.log(responseData);
+                            //msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            deepReply(message, responseData, 0);
+                            //console.log(msg);
+                            SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
+                                ['New Conversation', 1, msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error when creating new conversation!');
                             });
+                        })
+                        .catch(error => {
+                            console.error('OLLAMA Error:', error);
+                        });
                         }
                         else message.reply('Error when creating new database!');
                     })
@@ -198,6 +249,7 @@ client.on(Events.MessageCreate, async (message) => {
                             timeout: 60000
                         })
                         .then(response => {
+                            //console.log(response);
                             msg += response.data['data'] + '\`'
                             const formData = new FormData();
                             formData.append('file', fs.createReadStream(path.resolve(__dirname, relative_path_wav)));

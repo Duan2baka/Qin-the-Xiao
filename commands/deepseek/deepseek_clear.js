@@ -13,7 +13,6 @@ module.exports = {
                 var id = results[0].id;
                 var conversationId = results[0].conversationId;
                 SQLpool.query(`UPDATE deepseektable${id} SET content = '[]' WHERE id=${conversationId};`, function (error, results, fields) {
-                    console.log(results.affectedRows )
                     interaction.reply({ content: results.affectedRows ? "Clear your conversation sucessfully!" : "Unkown error! Try to select a conversation first!",
                         ephemeral: true });
                 });

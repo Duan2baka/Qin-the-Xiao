@@ -1,4 +1,5 @@
-var deepReply = (message, responseData, EmbedBuilder, think) => {
+const { EmbedBuilder } = require('discord.js');
+var deepReply = (message, responseData, think) => {
     // console.log(responseData);
     let startIndex = responseData.indexOf('<think>');
     let endIndex = responseData.indexOf('</think>');
@@ -20,7 +21,7 @@ var deepReply = (message, responseData, EmbedBuilder, think) => {
         .setColor(0xFFD700)
         .setDescription(afterThink)
         .setTimestamp()
-        .setFooter({ text: 'Deepseek-R1-14B'});
+        .setFooter({ text: 'Gemma3:27B'});
         message.reply({embeds: [embedMsg]});
         return;
     }
