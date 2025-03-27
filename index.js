@@ -83,6 +83,7 @@ client.on(Events.MessageCreate, async (message) => {
                     if(results.length){
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
+                        //console.log(msg)
                         msg.push({'role': 'user', 'content': text});
                         /*axios.post('http://127.0.0.1:11434', { data: msg, timeout: 60000 })
                         .then(response => {
@@ -104,8 +105,11 @@ client.on(Events.MessageCreate, async (message) => {
                         ollama.chat({model: 'gemma3:27b', messages: msg})
                         .then(response => {
                             let responseData = response.message.content;
+                            //console.log(response.message)
                             //console.log(responseData);
                             //msg = removeThinkTag(data);
+                            //console.log(msg)
+                            msg.push({'role': 'assistant', 'content': responseData})
                             msg = JSON.stringify(msg)
                             deepReply(message, responseData, 0);
                             //console.log(msg);
@@ -186,22 +190,22 @@ client.on(Events.MessageCreate, async (message) => {
                                 console.error('HTTP Error:', error);
                             });*/
 
-                        ollama.chat({model: 'gemma3:27b', messages: msg})
-                        .then(response => {
-                            let responseData = response.message.content;
-                            //console.log(responseData);
-                            //msg = removeThinkTag(data);
-                            msg = JSON.stringify(msg)
-                            deepReply(message, responseData, 0);
-                            //console.log(msg);
-                            SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
-                                ['New Conversation', 1, msg], function (error, results, fields) {
-                                    if(!results) message.reply('Error when creating new conversation!');
+                            ollama.chat({model: 'gemma3:27b', messages: msg})
+                            .then(response => {
+                                let responseData = response.message.content;
+                                //console.log(responseData);
+                                //msg = removeThinkTag(data);
+                                msg = JSON.stringify(msg)
+                                deepReply(message, responseData, 0);
+                                //console.log(msg);
+                                SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
+                                    ['New Conversation', 1, msg], function (error, results, fields) {
+                                        if(!results) message.reply('Error when creating new conversation!');
+                                });
+                            })
+                            .catch(error => {
+                                console.error('OLLAMA Error:', error);
                             });
-                        })
-                        .catch(error => {
-                            console.error('OLLAMA Error:', error);
-                        });
                         }
                         else message.reply('Error when creating new database!');
                     })

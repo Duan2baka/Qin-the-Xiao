@@ -19,7 +19,8 @@ var deepReply = (message, responseData, think) => {
     if(!thinkText.length || !think){
         const embedMsg = new EmbedBuilder()
         .setColor(0xFFD700)
-        .setDescription(afterThink)
+        //.setDescription(afterThink)
+        .setDescription(responseData)
         .setTimestamp()
         .setFooter({ text: 'Gemma3:27B'});
         message.reply({embeds: [embedMsg]});
@@ -33,9 +34,10 @@ var deepReply = (message, responseData, think) => {
 
     const embedMsg = new EmbedBuilder()
     .setColor(0xFFD700)
-    .setDescription(afterThink)
+    //.setDescription(afterThink)
+    .setDescription(responseData)
     .setTimestamp()
-    .setFooter({ text: 'Deepseek-R1-14B'});
+    .setFooter({ text: 'Gemma3:27B'});
     message.reply({embeds: [thinkMsg, embedMsg]});
 }
 

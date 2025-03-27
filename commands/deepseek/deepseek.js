@@ -32,7 +32,7 @@ module.exports = {
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
                         msg.push({'role': 'user', 'content': text});
-                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                        /*axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
@@ -48,12 +48,31 @@ module.exports = {
                         })
                         .catch(error => {
                             console.error('HTTP Error:', error);
+                        });*/
+                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        .then(response => {
+                            let responseData = response.message.content;
+                            //console.log(response.message)
+                            //console.log(responseData);
+                            //msg = removeThinkTag(data);
+                            //console.log(msg)
+                            msg.push({'role': 'assistant', 'content': responseData})
+                            msg = JSON.stringify(msg)
+                            deepReply(message, responseData, 0);
+                            //console.log(msg);
+                            SQLpool.query(`UPDATE deepseektable${id} SET content = ? WHERE id=${conversationId};`,
+                                [msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error while update conversation!');
+                            });
+                        })
+                        .catch(error => {
+                            console.error('OLLAMA Error:', error);
                         });
                     }
                     else{
                         let msg = [];
                         msg.push({'role': 'user', 'content': text});
-                        axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                        /*axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
                         .then(response => {
                             let data = response.data['data'];
                             let responseData = data[data.length - 1]['content'];
@@ -70,6 +89,25 @@ module.exports = {
                         })
                         .catch(error => {
                             console.error('HTTP Error:', error);
+                        });*/
+                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        .then(response => {
+                            let responseData = response.message.content;
+                            //console.log(responseData);
+                            //msg = removeThinkTag(data);
+                            msg = JSON.stringify(msg)
+                            deepReply(message, responseData, 0);
+                            //console.log(msg);
+                            
+                            SQLpool.query(`INSERT INTO deepseektable${id} (name, think, content) VALUES (?,?,?)`,
+                                ['New Conversation', 1, msg], function (error, results, fields) {
+                                    if(!results) message.reply('Error when creating new conversation!');
+                                    else SQLpool.query(`UPDATE deepseek SET conversationId='${results.insertId}' WHERE guildId='${guildId}' AND userId='${userId}'`,
+                                        function (error, results, fields) { if(!results) message.reply('Error when creating new conversation!');});
+                            });
+                        })
+                        .catch(error => {
+                            console.error('OLLAMA Error:', error);
                         });
                     }
                 });
@@ -82,7 +120,7 @@ module.exports = {
                         if(results){
                             let msg = [];
                             msg.push({'role': 'user', 'content': text});
-                            axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
+                            /*axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
                             .then(response => {
                                 let data = response.data['data'];
                                 let responseData = data[data.length - 1]['content'];
@@ -97,6 +135,22 @@ module.exports = {
                             })
                             .catch(error => {
                                 console.error('HTTP Error:', error);
+                            });*/
+                            ollama.chat({model: 'gemma3:27b', messages: msg})
+                            .then(response => {
+                                let responseData = response.message.content;
+                                //console.log(responseData);
+                                //msg = removeThinkTag(data);
+                                msg = JSON.stringify(msg)
+                                deepReply(message, responseData, 0);
+                                //console.log(msg);
+                                SQLpool.query(`INSERT INTO deepseektable${insertId} (name, think, content) VALUES (?,?,?)`,
+                                    ['New Conversation', 1, msg], function (error, results, fields) {
+                                        if(!results) message.reply('Error when creating new conversation!');
+                                });
+                            })
+                            .catch(error => {
+                                console.error('OLLAMA Error:', error);
                             });
                         }
                         else interaction.reply('Error when creating new database!');
