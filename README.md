@@ -1,4 +1,6 @@
-# Discord bot for personal use
+# Qin the Xiao
+
+> Qin the xiao is a private discord bot, the name is the same as my fat cat.
 
 ## Function:
 
