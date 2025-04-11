@@ -7,8 +7,8 @@ module.exports = async function img(message){
     const payload = {
         prompt: message.content.substring(2),
         steps: 50, 
-        width: 512,
-        height: 512,
+        width: 1024,
+        height: 1024,
         sampler_index: 'DPM++ 2M SDE',
         override_settings: {
             sd_model_checkpoint: 'sdxlUnstableDiffusers_nihilmania.safetensors [a47e380db3]',

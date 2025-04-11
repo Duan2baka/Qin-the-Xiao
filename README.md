@@ -21,3 +21,9 @@
 ### ChatBot
 
 - Now the bot can chat with you by mention it in guild or PM.
+- Use `/chat_clear` to clear history
+
+### Stable Diffusion
+
+- By typing `g!prompt`, an 1024x1024 image with prompt would be generated.
+- You can use `/gen` for more options, `/models` for model list.

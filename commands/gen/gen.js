@@ -76,8 +76,8 @@ module.exports = {
         const negative_prompt = interaction.options.getString('negative_prompt') || '';
         const schedule = interaction.options.getString('schedule') || 'Karras'; // Default to 'Karras'
         const sampling = interaction.options.getString('sampling') || 'DPM++ 2M SDE'; // Default to 'DPM++ 2M SDE'
-        const width = interaction.options.getInteger('width') || 512;
-        const height = interaction.options.getInteger('height') || 512;
+        const width = interaction.options.getInteger('width') || 780;
+        const height = interaction.options.getInteger('height') || 780;
         const sd_model_checkpoint = interaction.options.getString('model') || 'sdxlUnstableDiffusers_nihilmania.safetensors [a47e380db3]';
 
         const payload = {
