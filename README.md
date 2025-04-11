@@ -27,5 +27,5 @@
 
 ### Stable Diffusion
 
-- By typing `g!prompt`, an 1024x1024 image with prompt would be generated.
+- By typing `g!prompt`, a 1024x1024 image with prompt would be generated.
 - You can use `/gen` for more options, `/models` for model list.
