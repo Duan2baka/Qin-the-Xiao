@@ -17,3 +17,7 @@
 ### Speech to Text
 
 - Automatically detect voice message in text channel and transcript it to Chinese.
+
+### ChatBot
+
+- Now the bot can chat with you by mention it in guild or PM.
