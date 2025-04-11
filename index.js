@@ -7,9 +7,10 @@ const ffmpeg = require('fluent-ffmpeg');
 var sqlinfo = require('./database/userinfo.json');
 var mysql = require('mysql');
 
-const bot = require('./src/bot')
-const stt = require('./src/stt')
-const voiceupdate = require('./src/voiceupdate')
+const bot = require('./src/bot');
+const stt = require('./src/stt');
+const img = require('./src/img');
+const voiceupdate = require('./src/voiceupdate');
 
 const SQLpool = mysql.createPool({
     host: sqlinfo.host,
@@ -68,6 +69,7 @@ client.on(Events.MessageCreate, async (message) => {
             stt(item, message);
         }
     });
+    if(message.content.startsWith('g!')) img(message);
 })
 
 client.on(Events.InteractionCreate, async interaction => {
