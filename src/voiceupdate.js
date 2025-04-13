@@ -1,4 +1,5 @@
-function voiceupdate(oldState, newState){
+const { EmbedBuilder } = require('discord.js');
+function voiceupdate(oldState, newState, SQLpool, client){
     var guildId = oldState.guild.id;
     function getDateTime(timestamp, timezone){
         let tmp = new Date(timestamp);
