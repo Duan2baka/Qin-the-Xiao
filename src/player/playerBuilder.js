@@ -1,15 +1,16 @@
 const { SpotifyExtractor, DefaultExtractors } = require('@discord-player/extractor');
 const { Player } = require('discord-player');
 const { EmbedBuilder } = require('discord.js');
+const { YoutubeiExtractor } = require('discord-player-youtubei')
 
 module.exports = async function playerBuilder(client) {
     const player = new Player(client);
 
     try {
         await player.extractors.loadMulti(DefaultExtractors);
-        await player.extractors.register(SpotifyExtractor);
+        await player.extractors.register(YoutubeiExtractor, {});
         //await player.extractors.loadDefault();
-        console.log('SpotifyExtractor registered successfully!');
+        console.log('YoutubeiExtractor registered successfully!');
     } catch (error) {
         console.error('Failed to register SpotifyExtractor:', error);
     }

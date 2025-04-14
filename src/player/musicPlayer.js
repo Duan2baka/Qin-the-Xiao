@@ -1,106 +1,75 @@
 const { EmbedBuilder } = require('discord.js');
-const { useMainPlayer, useQueue } = require('discord-player');
-const ytdl = require('@distube/ytdl-core'); // For fetching YouTube audio streams
-const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const { Player } = require('discord-player');
+const { joinVoiceChannel } = require('@discordjs/voice');
+
 module.exports = async function main(message, client, player) {
-    const args = message.content.split(' ');
+    const args = message.content.split(' ').slice(1); 
+    const query = args.join(' '); 
 
-    // Load and register extractors for Spotify and YouTube
+    if (!query) {
+        return message.reply('Please provide a song name or YouTube URL!');
+    }
 
-    // Check for the s!play command
-    if (args[0] === 'y!play') {
+    const voiceChannel = message.member.voice.channel;
+    if (!voiceChannel) {
+        return message.reply('You need to be in a voice channel to play music!');
+    }
 
-        const url = args[1];
-        if (!ytdl.validateURL(url)) {
-            return message.reply('Invalid URL. Please provide a valid YouTube URL.');
+    try {
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator,
+            selfDeaf: false, 
+        });
+
+        if (!connection) {
+            return message.reply('Failed to join the voice channel. Please try again!');
         }
 
-        const voiceChannel = message.member.voice.channel;
-        if (!voiceChannel) {
-            return message.reply('You need to be in a voice channel to play music!');
-        }
+        var queue = player.nodes.get(message.guild.id);
 
-        try {
-            const connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: message.guild.id,
-                adapterCreator: message.guild.voiceAdapterCreator,
-            });
-
-            const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1 << 27, });
-
-            const player = createAudioPlayer();
-            const resource = createAudioResource(stream);
-            player.play(resource);
-
-            // Subscribe the connection to the player
-            connection.subscribe(player);
-
-            message.reply(`Now playing: ${url}`);
-        } catch (error) {
-            console.error(error);
-            message.reply('An error occurred while trying to play the music.');
-        }
-
-        /*console.log('Command detected: s!play');
-
-        // Ensure a link or keyword is provided
-        if (args.length < 2) {
-            return message.reply('Please provide a valid link or search keyword: `s!play <link or keyword>`');
-        }
-
-        const query = args.slice(1).join(' ');
-        console.log('Search query:', query);
-
-        // Check if the user is in a voice channel
-        const voiceChannel = message.member.voice.channel;
-        if (!voiceChannel) {
-            return message.reply('You need to join a voice channel first!');
-        }
-
-        try {
-            // Send a loading message
-            const loadingMsg = await message.channel.send('🔍 Searching for tracks...');
-
-            // Search for the query using discord-player
-            const searchResult = await player.search(query, {
-                requestedBy: message.author,
-            });
-
-            // Check if search results are found
-            if (!searchResult || !searchResult.tracks.length) {
-                return loadingMsg.edit('❌ No results found!');
-            }
-
-            // Create a queue for the guild
-            const queue = player.nodes.create(voiceChannel.guild.id, {
+        if (!queue) {
+            queue = player.nodes.create(message.guild.id, {
                 metadata: {
                     channel: message.channel,
-                    requestedBy: message.author,
+                    voiceChannel: voiceChannel,
                 },
-                leaveOnEmpty: true, // Disconnect when the channel is empty
-                leaveOnEnd: false,  // Stay connected after playback ends
             });
+        }
+        if (!queue.connection) await queue.connect(voiceChannel);
 
-            if (!queue.connection) await queue.connect(voiceChannel);
 
-            if (searchResult.playlist) {
-                queue.addTrack(searchResult.playlist.tracks);
-                await loadingMsg.edit(`✅ Added playlist to queue: **${searchResult.playlist.title}**`);
-            } else {
-                // Add single track to the queue
-                console.log(searchResult.tracks[0])
-                queue.addTrack('https://www.youtube.com/watch?v=ulOb9gIGGd0&ab_channel=westlifeVEVO');
-                await loadingMsg.edit(`✅ Added track to queue: **${searchResult.tracks[0].title}**`);
-            }
+        let searchResult;
+        if (query.startsWith('http://') || query.startsWith('https://')) {
+            searchResult = await player.search(query, {
+                requestedBy: message.author,
+                searchEngine: 'youtube', 
+            });
+        } else {
+            searchResult = await player.search(query, {
+                requestedBy: message.author,
+            });
+        }
 
-            // Play the queue if not already playing
-            if (!queue.isPlaying()) await queue.node.play();
-        } catch (error) {
-            // Handle errors gracefully
-            console.error('Search error:', error);
-            message.reply('❌ Error searching for this query. Please check the link or keyword and try again!');
-        }*/
+        if (!searchResult || !searchResult.tracks.length) {
+            return message.reply('No results found. Please check your input!');
+        }
+
+        if (searchResult.playlist) {
+            queue.addTrack(searchResult.tracks); 
+            message.reply(`Added playlist \`${searchResult.playlist.title}\` to the queue!`);
+        } else {
+            const track = searchResult.tracks[0];
+            queue.addTrack(track); 
+            message.reply(`Added song \`${track.title}\` to the queue!`);
+        }
+
+        if (!queue.isPlaying()) {
+            await queue.node.play();
+        }
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to play the music. Please try again later!');
     }
 };
-
