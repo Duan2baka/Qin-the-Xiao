@@ -1,8 +1,9 @@
+require('dotenv').config()
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, EmbedBuilder, Partials } = require('discord.js');
 const { token } = require('./config.json');
-const sqlinfo = require('./database/userinfo.json');
 const mysql = require('mysql');
 
 const bot = require('./src/bot');
@@ -12,13 +13,11 @@ const voiceupdate = require('./src/voiceupdate');
 const musicPlayer = require('./src/player/musicPlayer.js');
 const playerBuilder = require('./src/player/playerBuilder.js');
 
-require('dotenv').config()
-
 const SQLpool = mysql.createPool({
-    host: sqlinfo.host,
-    user: sqlinfo.user,
-    password: sqlinfo.password,
-    database: sqlinfo.database
+    host: process.env.SQL_HOST,
+    user: process.env.SQL_USER,
+    password: process.env.SQL_PWD,
+    database: process.env.SQL_DATABASE
 });
 
 const client = new Client({
@@ -36,11 +35,8 @@ const client = new Client({
     ]
 });
 
-(async() => {
+(async () => {
     const player = await playerBuilder(client);
-
-    //console.log('Player instance:', player);
-    //console.log('Extractors:', player.extractors);
 
     client.commands = new Collection();
     const foldersPath = path.join(__dirname, 'commands');
@@ -62,22 +58,18 @@ const client = new Client({
 
     client.once(Events.ClientReady, readyClient => {
         console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+        // setInterval(checkBadminton, 1000 * 60 * 60) // Runs every 1 hour
     });
 
     client.on(Events.MessageCreate, async (message) => {
-        // console.log(message.attachments.size);
         if (message.author.bot) return;
         if ((!message.guild) || message.mentions.users.has(client.user.id)) return bot(SQLpool, message, `<@${client.user.id}>`);
-        /****************Transcript to Text****************/
         message.attachments.forEach(item => {
-            if(item.contentType === 'audio/ogg'){
-                stt(item, message);
-            }
+            if (item.contentType === 'audio/ogg') stt(item, message);
         });
-        /****txt2img***/
-        if(message.content.startsWith('g!')) return img(message);
+        if (message.content.startsWith('g!')) return img(message);
         /****music player***/
-        //if(message.content.startsWith('s!')) return musicPlayer(message, client, player);
+        if(message.content.startsWith('y!')) return musicPlayer(message, player);
     })
 
     client.on(Events.InteractionCreate, async interaction => {
@@ -100,15 +92,9 @@ const client = new Client({
         }
     });
 
-
     client.on('voiceStateUpdate', (oldState, newState) => {
         voiceupdate(oldState, newState, SQLpool, client);
     });
-
-
-    client.on('ready', () => {
-        // setInterval(checkBadminton, 1000 * 60 * 60) // Runs every 1 hour
-    })
 
     client.login(token);
 })();
