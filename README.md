@@ -29,3 +29,15 @@
 
 - By typing `g!prompt`, a 1024x1024 image with prompt would be generated.
 - You can use `/gen` for more options, `/models` for model list.
+
+### Youtube Music Player
+
+- The bot now can play youtube music based on given URL of single song/playlist
+
+> Command List
+> y!play URL/Song Name
+> y!pause
+> y!resume
+> y!stop
+> y!queue check current queue
+> y!shuffle
