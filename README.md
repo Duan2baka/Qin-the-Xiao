@@ -35,9 +35,15 @@
 - The bot now can play youtube music based on given URL of single song/playlist
 
 > Command List
-> y!play URL/Song Name
-> y!pause
-> y!resume
-> y!stop
-> y!queue check current queue
-> y!shuffle
+> 
+> `y!play URL/Song Name`
+> 
+> `y!pause`
+> 
+> `y!resume`
+> 
+> `y!stop` Stop playing, and delete current playing queue
+> 
+> `y!queue` check current queue
+> 
+> `y!shuffle` Shuffle your play queue
