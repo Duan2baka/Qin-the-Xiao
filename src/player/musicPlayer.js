@@ -27,7 +27,7 @@ module.exports = async function main(message, client, player) {
                 adapterCreator: message.guild.voiceAdapterCreator,
             });
 
-            const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
+            const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1 << 27, });
 
             const player = createAudioPlayer();
             const resource = createAudioResource(stream);
