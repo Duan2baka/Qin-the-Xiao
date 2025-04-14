@@ -8,6 +8,7 @@ module.exports = async function playerBuilder(client) {
 
     try {
         await player.extractors.loadMulti(DefaultExtractors);
+        await player.extractors.register(SpotifyExtractor);
         await player.extractors.register(YoutubeiExtractor, {});
         //await player.extractors.loadDefault();
         console.log('YoutubeiExtractor registered successfully!');

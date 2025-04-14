@@ -22,13 +22,10 @@ module.exports = async function main(message, client, player) {
             adapterCreator: message.guild.voiceAdapterCreator,
             selfDeaf: false, 
         });
-
         if (!connection) {
             return message.reply('Failed to join the voice channel. Please try again!');
         }
-
         var queue = player.nodes.get(message.guild.id);
-
         if (!queue) {
             queue = player.nodes.create(message.guild.id, {
                 metadata: {
@@ -38,13 +35,11 @@ module.exports = async function main(message, client, player) {
             });
         }
         if (!queue.connection) await queue.connect(voiceChannel);
-
-
         let searchResult;
         if (query.startsWith('http://') || query.startsWith('https://')) {
             searchResult = await player.search(query, {
                 requestedBy: message.author,
-                searchEngine: 'youtube', 
+                searchEngine: 'youtubeVideo', 
             });
         } else {
             searchResult = await player.search(query, {
@@ -55,7 +50,7 @@ module.exports = async function main(message, client, player) {
         if (!searchResult || !searchResult.tracks.length) {
             return message.reply('No results found. Please check your input!');
         }
-
+        console.log(searchResult.tracks)
         if (searchResult.playlist) {
             queue.addTrack(searchResult.tracks); 
             message.reply(`Added playlist \`${searchResult.playlist.title}\` to the queue!`);
