@@ -77,7 +77,7 @@ const client = new Client({
         /****txt2img***/
         if(message.content.startsWith('g!')) return img(message);
         /****music player***/
-        if(message.content.startsWith('s!')) return musicPlayer(message, client);
+        //if(message.content.startsWith('s!')) return musicPlayer(message, client, player);
     })
 
     client.on(Events.InteractionCreate, async interaction => {

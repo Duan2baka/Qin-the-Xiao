@@ -1,9 +1,13 @@
 const { EmbedBuilder } = require('discord.js');
-const { useMainPlayer } = require('discord-player');
+const { useMainPlayer, useQueue } = require('discord-player');
+const { SpotifyExtractor, DefaultExtractors } = require('@discord-player/extractor');
 
-module.exports = async function main(message, client) {
-    const player = useMainPlayer();
+module.exports = async function main(message, client, player) {
     const args = message.content.split(' ');
+    
+    await player.extractors.loadMulti(DefaultExtractors);
+    await player.extractors.register(SpotifyExtractor);
+    
 
     if (args[0] === 's!play') {
         console.log('Command detected: s!play');
@@ -19,7 +23,7 @@ module.exports = async function main(message, client) {
         if (!voiceChannel) {
             return message.reply('You need to join a voice channel first!');
         }
-
+        
         try {
             const { track } = await player.play(message.member.voice.channel, query, {});
 
@@ -28,13 +32,13 @@ module.exports = async function main(message, client) {
             // let's return error if something failed
             return message.reply(`Something went wrong: ${e}`);
         }
-
-        /*try {
+/*
+        try {
             const loadingMsg = await message.channel.send('🔍 Searching for tracks...');
 
             const searchResult = await player.search(query, {
                 requestedBy: message.author,
-                //searchEngine: 'spotifyPlaylist',
+
             });
             //console.log(searchResult.tracks[0]);
 
@@ -54,12 +58,11 @@ module.exports = async function main(message, client) {
             if (!queue.connection) await queue.connect(voiceChannel);
 
             if (searchResult.playlist) {
-                for (const track of searchResult.tracks) {
-                    queue.addTrack(track);
-                }
+                queue.addTrack(searchResult.playlist.tracks);
                 await loadingMsg.edit(`✅ Added playlist to queue: **${searchResult.playlist.title}**`);
             } else {
                 queue.addTrack(searchResult.tracks[0]);
+                //player.play(message.channel, searchResult.tracks[0], {});
                 await loadingMsg.edit(`✅ Added track to queue: **${searchResult.tracks[0].title}**`);
             }
 
