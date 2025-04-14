@@ -69,7 +69,7 @@ const client = new Client({
         });
         if (message.content.startsWith('g!')) return img(message);
         /****music player***/
-        if(message.content.startsWith('y!')) return musicPlayer(message, client, player);
+        if(message.content.startsWith('y!')) return musicPlayer(message, player);
     })
 
     client.on(Events.InteractionCreate, async interaction => {

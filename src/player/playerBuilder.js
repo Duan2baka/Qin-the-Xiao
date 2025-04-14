@@ -49,15 +49,17 @@ module.exports = async function playerBuilder(client) {
     });
 
     player.events.on('playerStart', (queue, track) => {
+        let nowPlaying=track;
+        if(track.length > 1) nowPlaying=track[0];
         if (queue.metadata && queue.metadata.channel) {
             const embed = new EmbedBuilder()
                 .setColor('#1DB954')
                 .setTitle('🎵 Now playing')
-                .setDescription(`**[${track.title}](${track.url})**`)
-                .setThumbnail(track.thumbnail)
+                .setDescription(`**[${nowPlaying.title}](${nowPlaying.url})**`)
+                .setThumbnail(nowPlaying.thumbnail)
                 .addFields(
-                    { name: '👤 Artist', value: track.author, inline: true },
-                    { name: '⏱️ Length', value: track.duration, inline: true }
+                    { name: '👤 Artist', value: nowPlaying.author, inline: true },
+                    { name: '⏱️ Length', value: nowPlaying.duration, inline: true }
                 );
 
             queue.metadata.channel.send({ embeds: [embed] });

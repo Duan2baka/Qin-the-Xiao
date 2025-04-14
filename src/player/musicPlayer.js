@@ -2,19 +2,14 @@ const { EmbedBuilder } = require('discord.js');
 const { Player } = require('discord-player');
 const { joinVoiceChannel } = require('@discordjs/voice');
 
-module.exports = async function main(message, client, player) {
-    const args = message.content.split(' ').slice(1); 
-    const query = args.join(' '); 
-
+async function playMusic(message, player, query) {
     if (!query) {
         return message.reply('Please provide a song name or YouTube URL!');
     }
-
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel) {
         return message.reply('You need to be in a voice channel to play music!');
     }
-
     try {
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
@@ -36,8 +31,24 @@ module.exports = async function main(message, client, player) {
         }
         if (!queue.connection) await queue.connect(voiceChannel);
         let searchResult;
+        let trackLis;
         if (query.startsWith('http://') || query.startsWith('https://')) {
-            searchResult = await player.search(query, {
+            if(query.includes('playlist?list')){
+                let tmpResult = await player.search(query, {
+                    requestedBy: message.author,
+                    searchEngine: 'youtubePlaylist', 
+                });
+                if(!tmpResult) return message.reply('Wrong playlist URL!');
+                trackLis=[]
+                for(var idx in tmpResult.tracks){
+                    let tmp = await player.search(tmpResult.tracks[idx].url, {
+                        requestedBy: message.author,
+                        searchEngine: 'youtubeVideo', 
+                    })
+                    trackLis.push(tmp)
+                }
+            }
+            else searchResult = await player.search(query, {
                 requestedBy: message.author,
                 searchEngine: 'youtubeVideo', 
             });
@@ -46,25 +57,29 @@ module.exports = async function main(message, client, player) {
                 requestedBy: message.author,
             });
         }
-
-        if (!searchResult || !searchResult.tracks.length) {
+        //console.log(trackLis)
+        if ((!searchResult || !searchResult.tracks.length) && trackLis.length == 0)
             return message.reply('No results found. Please check your input!');
-        }
-        console.log(searchResult.tracks)
-        if (searchResult.playlist) {
-            queue.addTrack(searchResult.tracks); 
-            message.reply(`Added playlist \`${searchResult.playlist.title}\` to the queue!`);
-        } else {
-            const track = searchResult.tracks[0];
-            queue.addTrack(track); 
-            message.reply(`Added song \`${track.title}\` to the queue!`);
-        }
+        if (trackLis)
+            trackLis.forEach( element => { queue.addTrack(element.tracks[0]); });
+        else queue.addTrack(searchResult.tracks[0]); 
 
-        if (!queue.isPlaying()) {
-            await queue.node.play();
-        }
+        if (!queue.isPlaying()) await queue.node.play();
     } catch (error) {
         console.error(error);
         message.reply('An error occurred while trying to play the music. Please try again later!');
+    }
+}
+
+module.exports = async function main(message, player) {
+    const args = message.content.split(' ');
+    const query = args.slice(1).join(' '); 
+    switch(args[0]){
+        case 'y!play': playMusic(message, player, query); break;
+        case 'y!skip': skipMusic(message, player); break;
+        case 'y!shuffle': shuffleMusic(message, player); break;
+        case 'y!pause': pauseMusic(message, player); break;
+        case 'y!resume': resumeMusic(message, player); break;
+        default: message.reply('Unkown command!');
     }
 };
