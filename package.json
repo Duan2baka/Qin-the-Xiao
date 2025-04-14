@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
+    "@discordjs/voice": "^0.18.0",
     "@distube/ytdl-core": "^4.16.8",
     "axios": "^1.7.7",
     "discord-player": "^7.1.0",
@@ -22,7 +23,7 @@
     "ollama": "^0.5.14",
     "play-dl": "^1.9.7",
     "request": "^2.88.2",
-    "requests": "^0.3.0",
-    "ytdl-core": "^4.9.1"
+    "spotify-web-api-node": "^5.0.2",
+    "youtube-dl-exec": "^3.0.20"
   }
 }
