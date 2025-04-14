@@ -71,6 +71,113 @@ async function playMusic(message, player, query) {
     }
 }
 
+async function skipMusic(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.isPlaying()) {
+            return message.reply('There is no music currently playing!');
+        }
+        const currentTrack = queue.currentTrack;
+        queue.node.skip();
+        message.reply(`Skipped the track: **${currentTrack.title}**`);
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to skip the track. Please try again later!');
+    }
+}
+
+async function shuffleMusic(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.isPlaying()) {
+            return message.reply('There is no music currently playing!');
+        }
+        queue.tracks.shuffle();
+        message.reply('The queue has been shuffled!');
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to shuffle the queue. Please try again later!');
+    }
+}
+
+async function pauseMusic(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.isPlaying()) {
+            return message.reply('There is no music currently playing!');
+        }
+        if (queue.node.isPaused()) {
+            return message.reply('The music is already paused!');
+        }
+        queue.node.pause();
+        message.reply('The music has been paused!');
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to pause the music. Please try again later!');
+    }
+}
+
+async function resumeMusic(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.isPlaying()) {
+            return message.reply('There is no music currently playing!');
+        }
+        if (!queue.node.isPaused()) {
+            return message.reply('The music is already playing!');
+        }
+        queue.node.resume();
+        message.reply('The music has been resumed!');
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to resume the music. Please try again later!');
+    }
+}
+async function checkQueue(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.tracks.size) {
+            return message.reply('The queue is currently empty!');
+        }
+
+        const currentTrack = queue.currentTrack;
+        const tracks = queue.tracks.toArray();
+        const queueList = tracks
+            .slice(0, 10) // 限制显示前10首歌曲
+            .map((track, index) => `${index + 1}. **${track.title}** (${track.duration})`)
+            .join('\n');
+
+        const embed = new EmbedBuilder()
+            .setTitle('🎵 Current Queue')
+            .addFields(
+                { name: 'Now Playing', value: `**${currentTrack.title}** (${currentTrack.duration})`, inline: false },
+                { name: 'Up Next', value: queueList || 'No more songs in the queue!', inline: false }
+            )
+            .setColor(0x00AE86)
+            .setFooter({ text: `Total songs in queue: ${queue.tracks.size}` });
+
+        message.reply({ embeds: [embed] });
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to check the queue. Please try again later!');
+    }
+}
+
+async function stopMusic(message, player) {
+    try {
+        const queue = player.nodes.get(message.guild.id);
+        if (!queue || !queue.isPlaying()) {
+            return message.reply('There is no music currently playing!');
+        }
+
+        queue.delete(); // 停止播放并销毁队列
+        message.reply('Music playback has been stopped and the queue has been cleared!');
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to stop the music. Please try again later!');
+    }
+}
+
 module.exports = async function main(message, player) {
     const args = message.content.split(' ');
     const query = args.slice(1).join(' '); 
@@ -80,6 +187,8 @@ module.exports = async function main(message, player) {
         case 'y!shuffle': shuffleMusic(message, player); break;
         case 'y!pause': pauseMusic(message, player); break;
         case 'y!resume': resumeMusic(message, player); break;
+        case 'y!queue': checkQueue(message, player); break;
+        case 'y!stop': stopMusic(message, player); break;
         default: message.reply('Unkown command!');
     }
 };
