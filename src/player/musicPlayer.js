@@ -1,5 +1,4 @@
 const { EmbedBuilder } = require('discord.js');
-const { Player } = require('discord-player');
 const { joinVoiceChannel } = require('@discordjs/voice');
 
 async function playMusic(message, player, query) {
@@ -27,6 +26,14 @@ async function playMusic(message, player, query) {
                     channel: message.channel,
                     voiceChannel: voiceChannel,
                 },
+                bufferingTimeout: 15000, 
+                leaveOnStop: true, 
+                leaveOnStopCooldown: 600000, 
+                leaveOnEnd: true, 
+                leaveOnEndCooldown: 600000,
+                leaveOnEmpty: true,
+                leaveOnEmptyCooldown: 600000,
+                skipOnNoStream: true,
             });
         }
         if (!queue.connection) await queue.connect(voiceChannel);
@@ -39,13 +46,13 @@ async function playMusic(message, player, query) {
                     searchEngine: 'youtubePlaylist', 
                 });
                 if(!tmpResult) return message.reply('Wrong playlist URL!');
-                trackLis=[]
+                trackLis=[];
                 for(var idx in tmpResult.tracks){
                     let tmp = await player.search(tmpResult.tracks[idx].url, {
                         requestedBy: message.author,
                         searchEngine: 'youtubeVideo', 
-                    })
-                    trackLis.push(tmp)
+                    });
+                    trackLis.push(tmp);
                 }
             }
             else searchResult = await player.search(query, {
@@ -57,7 +64,6 @@ async function playMusic(message, player, query) {
                 requestedBy: message.author,
             });
         }
-        //console.log(trackLis)
         if ((!searchResult || !searchResult.tracks.length) && trackLis.length == 0)
             return message.reply('No results found. Please check your input!');
         if (trackLis)
@@ -143,7 +149,7 @@ async function checkQueue(message, player) {
         const currentTrack = queue.currentTrack;
         const tracks = queue.tracks.toArray();
         const queueList = tracks
-            .slice(0, 10) // 限制显示前10首歌曲
+            .slice(0, 10) 
             .map((track, index) => `${index + 1}. **${track.title}** (${track.duration})`)
             .join('\n');
 

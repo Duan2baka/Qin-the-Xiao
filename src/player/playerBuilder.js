@@ -13,7 +13,7 @@ module.exports = async function playerBuilder(client) {
         //await player.extractors.loadDefault();
         console.log('YoutubeiExtractor registered successfully!');
     } catch (error) {
-        console.error('Failed to register SpotifyExtractor:', error);
+        console.error('Failed to register YoutubeiExtractor:', error);
     }
     //await player.extractors.loadMulti((ext) => ext === 'YouTubeExtractor' || ext === 'SpotifyExtractor' || ext === 'AttachmentExtractor');
     player.events.on('emptyQueue', (queue) => {
