@@ -42,7 +42,7 @@ async function bot(SQLpool, message, mentionPattern){
                 if(results.length){
                     let msg = JSON.parse(results[0].content);
                     msg.push({'role': 'user', 'content': text});
-                    ollama.chat({model: 'gemma3:27b', messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
+                    ollama.chat({model: process.env.CHATBOT, messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
                     .then(response => {
                         let responseData = response.message.content;
                         msg.push({'role': 'assistant', 'content': responseData})
@@ -60,7 +60,7 @@ async function bot(SQLpool, message, mentionPattern){
                 else{
                     let msg = [];
                     msg.push({'role': 'user', 'content': text});
-                    ollama.chat({model: 'gemma3:27b', messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
+                    ollama.chat({model: process.env.CHATBOT, messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
                     .then(response => {
                         let responseData = response.message.content;
                         msg = JSON.stringify(msg);
@@ -86,7 +86,7 @@ async function bot(SQLpool, message, mentionPattern){
                     if(results){
                         let msg = [];
                         msg.push({'role': 'user', 'content': text});
-                        ollama.chat({model: 'gemma3:27b', messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
+                        ollama.chat({model: process.env.CHATBOT, messages: [{ 'role':'system', 'content': process.env.GLOBAL_CONTEXT }, ...msg]})
                         .then(response => {
                             let responseData = response.message.content;
                             msg = JSON.stringify(msg)

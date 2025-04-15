@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+require('dotenv').config()
 var deepReply = (message , responseData, think) => {
     // console.log(responseData);
     let startIndex = responseData.indexOf('<think>');
@@ -22,7 +23,7 @@ var deepReply = (message , responseData, think) => {
         //.setDescription(afterThink)
         .setDescription(responseData)
         .setTimestamp()
-        .setFooter({ text: 'Gemma3:27B'});
+        .setFooter({ text: process.env.CHATBOT_NAME });
         message.reply({embeds: [embedMsg]});
         return;
     }
@@ -37,7 +38,7 @@ var deepReply = (message , responseData, think) => {
     //.setDescription(afterThink)
     .setDescription(responseData)
     .setTimestamp()
-    .setFooter({ text: 'Gemma3:27B'});
+    .setFooter({ text: process.env.CHATBOT_NAME });
     message.reply({embeds: [thinkMsg, embedMsg]});
 }
 
@@ -64,7 +65,7 @@ var getReply = (responseData, think) => {
         //.setDescription(afterThink)
         .setDescription(responseData)
         .setTimestamp()
-        .setFooter({ text: 'Gemma3:27B'});
+        .setFooter({ text: process.env.CHATBOT_NAME });
         return {embeds: [embedMsg]};
     }
     const thinkMsg = new EmbedBuilder()
@@ -78,7 +79,7 @@ var getReply = (responseData, think) => {
     //.setDescription(afterThink)
     .setDescription(responseData)
     .setTimestamp()
-    .setFooter({ text: 'Gemma3:27B'});
+    .setFooter({ text: process.env.CHATBOT_NAME });
     return {embeds: [thinkMsg, embedMsg]};
 }
 

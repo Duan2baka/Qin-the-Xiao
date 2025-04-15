@@ -4,6 +4,7 @@ const ollama = require('ollama').default
 const removeThinkTag = require('../../utils/chat/removeThinkTag')
 const markdownThinkTag = require('../../utils/chat/markdownThinkTag')
 const getReply = require('../../utils/chat/reply').getReply
+require('dotenv').config()
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -33,24 +34,7 @@ module.exports = {
                         let msg = JSON.parse(results[0].content);
                         let think = results[0].think;
                         msg.push({'role': 'user', 'content': text});
-                        /*axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
-                        .then(response => {
-                            let data = response.data['data'];
-                            let responseData = data[data.length - 1]['content'];
-                            //console.log(responseData);
-                            msg = removeThinkTag(data);
-                            msg = JSON.stringify(msg);
-                            deepReply(interaction, responseData, think);
-                            //console.log(msg);
-                            SQLpool.query(`UPDATE chatbot${id} SET content = ? WHERE id=${conversationId};`,
-                                [msg], function (error, results, fields) {
-                                    if(!results) interaction.reply('Error while update conversation!');
-                            });
-                        })
-                        .catch(error => {
-                            console.error('HTTP Error:', error);
-                        });*/
-                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        ollama.chat({model: process.env.CHATBOT, messages: msg})
                         .then(response => {
                             let responseData = response.message.content;
                             //console.log(response.message)
@@ -73,25 +57,7 @@ module.exports = {
                     else{
                         let msg = [];
                         msg.push({'role': 'user', 'content': text});
-                        /*axios.post('http://100.90.99.3:9999/api', { data: msg, timeout: 60000 })
-                        .then(response => {
-                            let data = response.data['data'];
-                            let responseData = data[data.length - 1]['content'];
-                            deepReply(interaction, responseData, 1);
-                            msg = removeThinkTag(data);
-                            msg = JSON.stringify(msg)
-                            // console.log(`${msg}`)
-                            SQLpool.query(`INSERT INTO chatbot${id} (name, think, content) VALUES (?,?,?)`,
-                                ['New Conversation', 1, msg], function (error, results, fields) {
-                                    if(!results) interaction.reply('Error when creating new conversation!');
-                                    else SQLpool.query(`UPDATE chatbot SET conversationId='${results.insertId}' WHERE guildId='${guildId}' AND userId='${userId}'`,
-                                        function (error, results, fields) { if(!results) interaction.reply('Error when creating new conversation!');});
-                            });
-                        })
-                        .catch(error => {
-                            console.error('HTTP Error:', error);
-                        });*/
-                        ollama.chat({model: 'gemma3:27b', messages: msg})
+                        ollama.chat({model: process.env.CHATBOT, messages: msg})
                         .then(response => {
                             let responseData = response.message.content;
                             //console.log(responseData);
@@ -137,7 +103,7 @@ module.exports = {
                             .catch(error => {
                                 console.error('HTTP Error:', error);
                             });*/
-                            ollama.chat({model: 'gemma3:27b', messages: msg})
+                            ollama.chat({model: process.env.CHATBOT, messages: msg})
                             .then(response => {
                                 let responseData = response.message.content;
                                 //console.log(responseData);

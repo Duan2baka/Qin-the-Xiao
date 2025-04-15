@@ -64,12 +64,12 @@ async function playMusic(message, player, query) {
                 requestedBy: message.author,
             });
         }
-        if ((!searchResult || !searchResult.tracks.length) && trackLis.length == 0)
+        if ((!searchResult || !searchResult.tracks.length) && trackLis && trackLis.length == 0)
             return message.reply('No results found. Please check your input!');
         if (trackLis)
             trackLis.forEach( element => { queue.addTrack(element.tracks[0]); });
-        else queue.addTrack(searchResult.tracks[0]); 
-
+        else await queue.addTrack(searchResult.tracks[0]); 
+        message.reply(`Sucessfully added to the queue!`);
         if (!queue.isPlaying()) await queue.node.play();
     } catch (error) {
         console.error(error);
@@ -175,13 +175,36 @@ async function stopMusic(message, player) {
         if (!queue || !queue.isPlaying()) {
             return message.reply('There is no music currently playing!');
         }
-
-        queue.delete(); // 停止播放并销毁队列
+        queue.delete(); 
         message.reply('Music playback has been stopped and the queue has been cleared!');
     } catch (error) {
         console.error(error);
         message.reply('An error occurred while trying to stop the music. Please try again later!');
     }
+}
+
+async function helpCommand(message) {
+    const commands = {
+        'y!play <query>': 'Play a song or add it to the queue. You can use a song name or a YouTube URL.',
+        'y!skip': 'Skip the currently playing song.',
+        'y!pause': 'Pause the currently playing song.',
+        'y!resume': 'Resume the paused song.',
+        'y!shuffle': 'Shuffle the songs in the queue.',
+        'y!queue': 'Display the current music queue.',
+        'y!stop': 'Stop the music and clear the queue.',
+        'y!help': 'Display this help message.',
+    };
+
+    const embed = new EmbedBuilder()
+        .setTitle('🎵 Music Bot Commands')
+        .setDescription('Here is a list of all available commands:')
+        .setColor(0x00AE86);
+
+    for (const [command, description] of Object.entries(commands)) {
+        embed.addFields({ name: command, value: description, inline: false });
+    }
+
+    message.reply({ embeds: [embed] });
 }
 
 module.exports = async function main(message, player) {
@@ -195,6 +218,7 @@ module.exports = async function main(message, player) {
         case 'y!resume': resumeMusic(message, player); break;
         case 'y!queue': checkQueue(message, player); break;
         case 'y!stop': stopMusic(message, player); break;
+        case 'y!help': helpCommand(message); break;
         default: message.reply('Unkown command!');
     }
 };
