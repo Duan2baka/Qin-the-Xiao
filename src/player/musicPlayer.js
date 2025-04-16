@@ -14,7 +14,7 @@ async function playMusic(message, player, query) {
             channelId: voiceChannel.id,
             guildId: message.guild.id,
             adapterCreator: message.guild.voiceAdapterCreator,
-            selfDeaf: false, 
+            selfDeaf: false,
         });
         if (!connection) {
             return message.reply('Failed to join the voice channel. Please try again!');
@@ -26,10 +26,10 @@ async function playMusic(message, player, query) {
                     channel: message.channel,
                     voiceChannel: voiceChannel,
                 },
-                bufferingTimeout: 15000, 
-                leaveOnStop: true, 
-                leaveOnStopCooldown: 600000, 
-                leaveOnEnd: true, 
+                bufferingTimeout: 15000,
+                leaveOnStop: true,
+                leaveOnStopCooldown: 600000,
+                leaveOnEnd: true,
                 leaveOnEndCooldown: 600000,
                 leaveOnEmpty: true,
                 leaveOnEmptyCooldown: 600000,
@@ -40,24 +40,23 @@ async function playMusic(message, player, query) {
         let searchResult;
         let trackLis;
         if (query.startsWith('http://') || query.startsWith('https://')) {
-            if(query.includes('playlist?list')){
+            if (query.includes('playlist?list')) {
                 let tmpResult = await player.search(query, {
                     requestedBy: message.author,
-                    searchEngine: 'youtubePlaylist', 
+                    searchEngine: 'youtubePlaylist',
                 });
-                if(!tmpResult) return message.reply('Wrong playlist URL!');
-                trackLis=[];
-                for(var idx in tmpResult.tracks){
+                if (!tmpResult) return message.reply('Wrong playlist URL!');
+                trackLis = [];
+                for (var idx in tmpResult.tracks) {
                     let tmp = await player.search(tmpResult.tracks[idx].url, {
                         requestedBy: message.author,
-                        searchEngine: 'youtubeVideo', 
+                        searchEngine: 'youtubeVideo',
                     });
                     trackLis.push(tmp);
                 }
-            }
-            else searchResult = await player.search(query, {
+            } else searchResult = await player.search(query, {
                 requestedBy: message.author,
-                searchEngine: 'youtubeVideo', 
+                searchEngine: 'youtubeVideo',
             });
         } else {
             searchResult = await player.search(query, {
@@ -67,9 +66,9 @@ async function playMusic(message, player, query) {
         if ((!searchResult || !searchResult.tracks.length) && trackLis && trackLis.length == 0)
             return message.reply('No results found. Please check your input!');
         if (trackLis)
-            trackLis.forEach( element => { queue.addTrack(element.tracks[0]); });
-        else await queue.addTrack(searchResult.tracks[0]); 
-        message.reply(`Sucessfully added to the queue!`);
+            trackLis.forEach((element) => { queue.addTrack(element.tracks[0]); });
+        else await queue.addTrack(searchResult.tracks[0]);
+        message.reply(`Successfully added to the queue!`);
         if (!queue.isPlaying()) await queue.node.play();
     } catch (error) {
         console.error(error);
@@ -77,120 +76,131 @@ async function playMusic(message, player, query) {
     }
 }
 
-async function skipMusic(message, player) {
+async function playNext(message, player, query) {
+    if (!query) {
+        return message.reply('Please provide a song name or YouTube URL!');
+    }
+    const queue = player.nodes.get(message.guild.id);
+    if (!queue) {
+        return message.reply('No queue found. Use `y!play` to start playing music first.');
+    }
+    try {
+        let searchResult;
+        if (query.startsWith('http://') || query.startsWith('https://')) {
+            searchResult = await player.search(query, {
+                requestedBy: message.author,
+                searchEngine: 'youtubeVideo',
+            });
+        } else {
+            searchResult = await player.search(query, {
+                requestedBy: message.author,
+            });
+        }
+        if (!searchResult || !searchResult.tracks.length) {
+            return message.reply('No results found. Please check your input!');
+        }
+        queue.tracks.unshift(searchResult.tracks[0]); // Add to the beginning of the queue
+        message.reply(`Successfully added **${searchResult.tracks[0].title}** as the next song!`);
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to add the song as the next track. Please try again later!');
+    }
+}
+
+async function shufflePlay(message, player, query) {
+    if (!query) {
+        return message.reply('Please provide a playlist URL!');
+    }
+    const queue = player.nodes.get(message.guild.id);
+    if (!queue) {
+        return message.reply('No queue found. Use `y!play` to start playing music first.');
+    }
+    try {
+        let playlistResult = await player.search(query, {
+            requestedBy: message.author,
+            searchEngine: 'youtubePlaylist',
+        });
+        if (!playlistResult || !playlistResult.tracks.length) {
+            return message.reply('No playlist found. Please check your input!');
+        }
+        const shuffledTracks = playlistResult.tracks.sort(() => Math.random() - 0.5); // Shuffle the playlist
+        shuffledTracks.forEach((track) => queue.addTrack(track));
+        message.reply(`Successfully shuffled and added the playlist to the queue!`);
+        if (!queue.isPlaying()) await queue.node.play();
+    } catch (error) {
+        console.error(error);
+        message.reply('An error occurred while trying to shuffle the playlist. Please try again later!');
+    }
+}
+
+async function wind(message, player, seconds) {
     try {
         const queue = player.nodes.get(message.guild.id);
         if (!queue || !queue.isPlaying()) {
             return message.reply('There is no music currently playing!');
         }
-        const currentTrack = queue.currentTrack;
-        queue.node.skip();
-        message.reply(`Skipped the track: **${currentTrack.title}**`);
+        if (!seconds || isNaN(seconds)) {
+            return message.reply('Please provide a valid number of seconds to wind forward!');
+        }
+        const newTime = queue.node.getTimestamp().current + seconds * 1000;
+        await queue.node.seek(newTime);
+        message.reply(`Wound forward by ${seconds} seconds!`);
     } catch (error) {
         console.error(error);
-        message.reply('An error occurred while trying to skip the track. Please try again later!');
+        message.reply('An error occurred while trying to wind forward. Please try again later!');
     }
 }
 
-async function shuffleMusic(message, player) {
+async function rewind(message, player, seconds) {
     try {
         const queue = player.nodes.get(message.guild.id);
         if (!queue || !queue.isPlaying()) {
             return message.reply('There is no music currently playing!');
         }
-        queue.tracks.shuffle();
-        message.reply('The queue has been shuffled!');
+        if (!seconds || isNaN(seconds)) {
+            return message.reply('Please provide a valid number of seconds to rewind!');
+        }
+        const newTime = Math.max(queue.node.getTimestamp().current - seconds * 1000, 0); // Ensure time doesn't go below 0
+        await queue.node.seek(newTime);
+        message.reply(`Rewound by ${seconds} seconds!`);
     } catch (error) {
         console.error(error);
-        message.reply('An error occurred while trying to shuffle the queue. Please try again later!');
+        message.reply('An error occurred while trying to rewind. Please try again later!');
     }
 }
 
-async function pauseMusic(message, player) {
+async function seekToTime(message, player, time) {
     try {
         const queue = player.nodes.get(message.guild.id);
         if (!queue || !queue.isPlaying()) {
             return message.reply('There is no music currently playing!');
         }
-        if (queue.node.isPaused()) {
-            return message.reply('The music is already paused!');
+        const [minutes, seconds] = time.split(':').map(Number);
+        if (isNaN(minutes) || isNaN(seconds)) {
+            return message.reply('Please provide a valid time in the format MM:SS!');
         }
-        queue.node.pause();
-        message.reply('The music has been paused!');
+        const newTime = minutes * 60 * 1000 + seconds * 1000;
+        await queue.node.seek(newTime);
+        message.reply(`Seeked to ${time}!`);
     } catch (error) {
         console.error(error);
-        message.reply('An error occurred while trying to pause the music. Please try again later!');
-    }
-}
-
-async function resumeMusic(message, player) {
-    try {
-        const queue = player.nodes.get(message.guild.id);
-        if (!queue || !queue.isPlaying()) {
-            return message.reply('There is no music currently playing!');
-        }
-        if (!queue.node.isPaused()) {
-            return message.reply('The music is already playing!');
-        }
-        queue.node.resume();
-        message.reply('The music has been resumed!');
-    } catch (error) {
-        console.error(error);
-        message.reply('An error occurred while trying to resume the music. Please try again later!');
-    }
-}
-async function checkQueue(message, player) {
-    try {
-        const queue = player.nodes.get(message.guild.id);
-        if (!queue || !queue.tracks.size) {
-            return message.reply('The queue is currently empty!');
-        }
-
-        const currentTrack = queue.currentTrack;
-        const tracks = queue.tracks.toArray();
-        const queueList = tracks
-            .slice(0, 10) 
-            .map((track, index) => `${index + 1}. **${track.title}** (${track.duration})`)
-            .join('\n');
-
-        const embed = new EmbedBuilder()
-            .setTitle('🎵 Current Queue')
-            .addFields(
-                { name: 'Now Playing', value: `**${currentTrack.title}** (${currentTrack.duration})`, inline: false },
-                { name: 'Up Next', value: queueList || 'No more songs in the queue!', inline: false }
-            )
-            .setColor(0x00AE86)
-            .setFooter({ text: `Total songs in queue: ${queue.tracks.size}` });
-
-        message.reply({ embeds: [embed] });
-    } catch (error) {
-        console.error(error);
-        message.reply('An error occurred while trying to check the queue. Please try again later!');
-    }
-}
-
-async function stopMusic(message, player) {
-    try {
-        const queue = player.nodes.get(message.guild.id);
-        if (!queue || !queue.isPlaying()) {
-            return message.reply('There is no music currently playing!');
-        }
-        queue.delete(); 
-        message.reply('Music playback has been stopped and the queue has been cleared!');
-    } catch (error) {
-        console.error(error);
-        message.reply('An error occurred while trying to stop the music. Please try again later!');
+        message.reply('An error occurred while trying to seek to the specified time. Please try again later!');
     }
 }
 
 async function helpCommand(message) {
     const commands = {
         'y!play <query>': 'Play a song or add it to the queue. You can use a song name or a YouTube URL.',
+        'y!playnext <query>': 'Add a song as the next track to play.',
+        'y!shuffleplay <playlist URL>': 'Shuffle the playlist and add it to the queue.',
         'y!skip': 'Skip the currently playing song.',
         'y!pause': 'Pause the currently playing song.',
         'y!resume': 'Resume the paused song.',
         'y!shuffle': 'Shuffle the songs in the queue.',
         'y!queue': 'Display the current music queue.',
+        'y!wind <seconds>': 'Wind forward the current track by a specified number of seconds.',
+        'y!rewind <seconds>': 'Rewind the current track by a specified number of seconds.',
+        'y!set <MM:SS>': 'Seek to a specific time in the current track.',
         'y!stop': 'Stop the music and clear the queue.',
         'y!help': 'Display this help message.',
     };
@@ -209,16 +219,22 @@ async function helpCommand(message) {
 
 module.exports = async function main(message, player) {
     const args = message.content.split(' ');
-    const query = args.slice(1).join(' '); 
-    switch(args[0]){
+    const command = args[0];
+    const query = args.slice(1).join(' ');
+    switch (command) {
         case 'y!play': playMusic(message, player, query); break;
+        case 'y!playnext': playNext(message, player, query); break;
+        case 'y!shuffleplay': shufflePlay(message, player, query); break;
         case 'y!skip': skipMusic(message, player); break;
         case 'y!shuffle': shuffleMusic(message, player); break;
         case 'y!pause': pauseMusic(message, player); break;
         case 'y!resume': resumeMusic(message, player); break;
         case 'y!queue': checkQueue(message, player); break;
+        case 'y!wind': wind(message, player, parseInt(args[1], 10)); break;
+        case 'y!rewind': rewind(message, player, parseInt(args[1], 10)); break;
+        case 'y!set': seekToTime(message, player, args[1]); break;
         case 'y!stop': stopMusic(message, player); break;
         case 'y!help': helpCommand(message); break;
-        default: message.reply('Unkown command!');
+        default: message.reply('Unknown command!');
     }
 };
